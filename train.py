@@ -3,7 +3,8 @@ import datasets
 from PIL import Image
 import vlm
 from transformers import Trainer, TrainingArguments
-from transformers import DataCollatorForLanguageModeling, AutoModelForCausalLM, AutoTokenizer
+from transformers import DataCollatorForLanguageModeling, AutoModel, AutoTokenizer, Gemma2Config
+
 import configs
 
 
@@ -16,11 +17,16 @@ os.environ['HF_HOME'] = config['cache']
 dataset = datasets.load_dataset("json", data_files=config["path"], field="questions")
 dataset_val = datasets.load_dataset("json", data_files=config["path"], field="questions")
 
+vit = AutoModel.from_pretrained('facebook/dinov2-base')
 
 tokenizer = AutoTokenizer.from_pretrained(config["name"], token=config['token'])
-model = AutoModelForCausalLM.from_pretrained(config["name"], token=config['token'])
+tokenizer = vlm.vlm_tokenizer(tokenizer)
 
-tokenizer.pad_token = tokenizer.eos_token
+gemma_config = Gemma2Config()
+gemma_config.visual_embed_dim = vit.config.hidden_size
+llm = vlm.VLMGemma2ForCausalLM.from_pretrained(config["name"], token=config['token'])
+
+
 data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
 
@@ -33,7 +39,7 @@ training_args = TrainingArguments(
 )
 
 trainer = Trainer(
-    model=model,
+    model=llm,
     args=training_args,
     train_dataset=dataset,
     eval_dataset=dataset_val,
