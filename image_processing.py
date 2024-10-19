@@ -11,7 +11,7 @@ IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
 
 
-def processor(path, dir, image_id):
+def load_image(path, dir, image_id):
     image_id = "0" * (12 - len(image_id)) + image_id
     img = Image.open(os.path.join(path, dir, "COCO_{}_{}.jpg".format(dir, image_id)))
     img = img.resize((224, 224))

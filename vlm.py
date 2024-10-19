@@ -1,10 +1,11 @@
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, List, Dict, Any
 
 import transformers
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, DataCollatorForLanguageModeling
+from transformers import Gemma2ForCausalLM, HybridCache, DataCollatorForLanguageModeling, AutoModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
+from image_processing import load_image
 
 IMAGE_TOKEN = "<image>"
 
@@ -24,11 +25,11 @@ class VLMDataCollator(DataCollatorForLanguageModeling):
         self.tokenizer = tokenizer
 
 
-
 class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
+        self.vit = AutoModel.from_pretrained('facebook/dinov2-base')
 
     def forward(
         self,
@@ -37,7 +38,7 @@ class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[HybridCache] = None,
         text_embeds: Optional[torch.FloatTensor] = None,
-        visual_embeds: Optional[torch.FloatTensor] = None,
+        input_imgs: Optional[torch.FloatTensor] = None,
         labels: Optional[torch.LongTensor] = None,
         use_cache: Optional[bool] = None,
         output_attentions: Optional[bool] = None,
@@ -47,10 +48,18 @@ class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
         num_logits_to_keep: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
+        visual_embeds = self.vit(input_imgs)
         visual_embeds = self.linear_projector(visual_embeds)
+        text_embeds = self.input_embeddings(input_ids)
         input_embeds = torch.cat((visual_embeds, text_embeds), dim=1)
 
-        return super().forward(input_ids,attention_mask, position_ids, past_key_values, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+        return super().forward(input_ids, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+
+
+
+
+
+
 
 
 
