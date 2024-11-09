@@ -7,6 +7,7 @@ from transformers import Gemma2ForCausalLM, HybridCache, AutoModel, PreTrainedTo
 from transformers.modeling_outputs import CausalLMOutputWithPast
 from PIL import Image
 import os
+import numpy as np
 
 
 IMAGE_TOKEN = "<image>"
@@ -46,7 +47,7 @@ class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
         batch_size, seq_len = input_ids.shape
 
         visual_embeds = self.vit(input_imgs)
-        visual_embeds = self.linear_projector(visual_embeds)
+        visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
         text_embeds = self.embed_tokens(input_ids)
 
@@ -74,7 +75,7 @@ class VLMDataCollator(DefaultDataCollator):
         self.context_length = self.num_patches + self.text_length
         self.processor = processor
 
-    def _load_image(path, split, image_id):
+    def _load_image(self, path, split, image_id):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
         img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
         return img
@@ -84,15 +85,13 @@ class VLMDataCollator(DefaultDataCollator):
         text = IMAGE_TOKEN * self.num_patches + "<bos>" + row['question'] + row['answer']
         label = row['answer']
 
-        text_tokenized = self.tokenizer(text, truncation=True)
+        text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length, return_tensors="np")
 
-        label_tokenized = self.tokenizer(label, truncation=True)['input_ids']
-
-        text_tokenized = self.tokenizer.pad(text_tokenized, padding="max_length", max_length=self.context_length)
-        label_tokenized = [-100] * (self.context_length - len(label_tokenized)) + label_tokenized
+        label_tokenized = self.tokenizer(label, truncation=True, padding="max_length", max_length=self.context_length, return_tensors="np")['input_ids']
+        label_tokenized[label_tokenized == 0] = -100
 
         img = self._load_image(self.img_path, self.split, row['image_id'])
-        pt_image = self.processor(images=img, return_tensors="pt")['pixel_values']
+        pt_image = self.processor(images=img, return_tensors="np")['pixel_values']
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'], 'labels': label_tokenized, 'input_imgs': pt_image}
 
@@ -109,9 +108,9 @@ class VLMBatchDataCollator(DefaultDataCollator):
             input_ids.append(torch.LongTensor(b['input_ids']))
             attention_mask.append(torch.LongTensor(b['attention_mask']))
             labels.append(torch.LongTensor(b['labels']))
-            input_imgs.append(b['input_imgs'])
+            input_imgs.append(torch.Tensor(b['input_imgs']))
 
-        return {'input_ids': torch.stack(input_ids,0), 'attention_mask': torch.stack(attention_mask,0), 'labels': torch.stack(labels,0), 'input_imgs': torch.stack(input_imgs,0)}
+        return {'input_ids': torch.cat(input_ids,0), 'attention_mask': torch.cat(attention_mask,0), 'labels': torch.cat(labels,0), 'input_imgs': torch.cat(input_imgs,0)}
 
 
 def vlm_tokenizer(tokenizer: transformers.GemmaTokenizer):

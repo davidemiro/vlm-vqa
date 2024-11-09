@@ -3,22 +3,17 @@ import vlm
 from transformers import Trainer, TrainingArguments, AutoConfig, AutoModel
 from transformers import AutoTokenizer
 import multiprocessing
-
 import configs
-from dataset import get_dataset
+import datasets
 
 
 config = configs.load_configs()["TRAIN"]
-os.environ['HF_HOME'] = config['cache']
 
-dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
-dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
+dataset_train = datasets.load_from_disk(config['train_path'])
+dataset_val = datasets.load_from_disk(config['val_path'])
 
 tokenizer = AutoTokenizer.from_pretrained(config["name"], token=config['token'])
 tokenizer = vlm.vlm_tokenizer(tokenizer)
-
-processor = AutoTokenizer.from_pretrained(config["vit_name"])
-
 
 vlm_config = AutoConfig.from_pretrained(config['name'], token=config['token'])
 vlm_config.visual_embed_dim = 768
@@ -30,14 +25,7 @@ vlm_config.vit_name = config["vit_name"]
 vlm_model = vlm.VLMGemma2ForCausalLM.from_pretrained(config['name'], config=vlm_config, token=config['token'])
 num_patches = (vlm_model.vit.config.patch_size + 2) ** 2 + 1
 
-
-data_collator_train = vlm.VLMDataCollator(tokenizer, int(config['text_length']), processor, num_patches, config['train_img_path'], split='train')
-data_collator_val = vlm.VLMDataCollator(tokenizer, int(config['text_length']), processor, num_patches, config['val_img_path'], split='val')
 data_collator_batch = vlm.VLMBatchDataCollator()
-
-dataset_train = dataset_train.map(data_collator_train, batched=False, num_proc=multiprocessing.cpu_count())
-dataset_val = dataset_val.map(data_collator_val, batched=False, num_proc=multiprocessing.cpu_count())
-
 
 training_args = TrainingArguments(
     output_dir=config["output_dir"],
@@ -62,5 +50,6 @@ trainer = Trainer(
 
 
 trainer.train()
+
 
 
