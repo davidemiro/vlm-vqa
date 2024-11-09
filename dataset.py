@@ -1,6 +1,5 @@
 import datasets
 import pandas
-from image_processing import load_image
 import torch
 
 
@@ -18,19 +17,5 @@ def get_dataset(annotations_path, questions_path):
     dataset = pandas.merge(questions, annotations, on="question_id")
 
     return datasets.Dataset.from_pandas(dataset)
-
-
-def map_dataset(tokenizer,row, img_path):
-    image_id = row["image_id"]
-    answer = row["answer"]
-    question = row["question"]
-
-
-    ts_image = load_image(self.img_path, self.split, row['image_id'])
-    tk_question = torch.Tensor(tokenizer.tokenize(question))
-    tk_answer = torch.Tensor(tokenizer.tokenize(answer))
-
-    return row
-
 
 

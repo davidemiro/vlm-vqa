@@ -1,14 +1,13 @@
-from typing import Optional, Union, Tuple, List, Dict, Any
+from typing import Optional, Union, Tuple
 
 import transformers
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, DataCollatorForLanguageModeling, AutoModel, \
-    DataCollatorWithPadding, PreTrainedTokenizer, DefaultDataCollator
+from transformers import Gemma2ForCausalLM, HybridCache, AutoModel, PreTrainedTokenizer, DefaultDataCollator
 from transformers.modeling_outputs import CausalLMOutputWithPast
-from image_processing import load_image
+from PIL import Image
+import os
 
-import numpy as np
 
 IMAGE_TOKEN = "<image>"
 
@@ -17,8 +16,15 @@ class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vit = AutoModel.from_pretrained('facebook/dinov2-base')
-        self.vit.config.image_size
+        self.vit = AutoModel.from_pretrained(config.vit_name)
+
+        self.image_token_id = self.config.image_token_id
+        self.pad_token_id = self.config.pad_token_id
+
+        self.embed_tokens = nn.Embedding(self.config.vocab_size + 1, self.config.hidden_size)
+
+        with torch.no_grad():
+            self.embed_tokens.weight[:self.config.vocab_size, :] = self.model.embed_tokens.weight
 
     def forward(
         self,
@@ -37,21 +43,41 @@ class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
         num_logits_to_keep: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
+        batch_size, seq_len = input_ids.shape
+
         visual_embeds = self.vit(input_imgs)
         visual_embeds = self.linear_projector(visual_embeds)
-        text_embeds = self.input_embeddings(input_ids)
-        input_embeds = torch.cat((visual_embeds, text_embeds), dim=1)
 
-        return super().forward(input_ids, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+        text_embeds = self.embed_tokens(input_ids)
+
+        text_mask = (input_ids != self.pad_token_id) & (input_ids != self.image_token_id)
+        image_mask = input_ids == self.image_token_id
+
+        input_embeds = torch.zeros(batch_size, seq_len, self.config.hidden_size)
+
+        text_mask_expanded = text_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
+        image_mask_expanded = image_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
+
+        input_embeds = torch.where(text_mask_expanded, text_embeds, input_embeds)
+        input_embeds = input_embeds.masked_scatter(image_mask_expanded, visual_embeds)
+
+        return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
 
 class VLMDataCollator(DefaultDataCollator):
-    def __init__(self, tokenizer: PreTrainedTokenizer, context_length, num_patches, img_path, split='train') -> None:
+    def __init__(self, tokenizer: PreTrainedTokenizer, text_length, processor, num_patches, img_path, split='train') -> None:
         self.tokenizer = tokenizer
         self.img_path = img_path
         self.split = split
         self.num_patches = num_patches
-        self.context_length = context_length
+        self.text_length = text_length
+        self.context_length = self.num_patches + self.text_length
+        self.processor = processor
+
+    def _load_image(path, split, image_id):
+        image_id = "0" * (12 - len(str(image_id))) + str(image_id)
+        img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
+        return img
 
     def __call__(self, row):
         
@@ -60,25 +86,32 @@ class VLMDataCollator(DefaultDataCollator):
 
         text_tokenized = self.tokenizer(text, truncation=True)
 
-        label_tokenized = self.tokenizer(label, truncation=True)
+        label_tokenized = self.tokenizer(label, truncation=True)['input_ids']
 
         text_tokenized = self.tokenizer.pad(text_tokenized, padding="max_length", max_length=self.context_length)
         label_tokenized = [-100] * (self.context_length - len(label_tokenized)) + label_tokenized
 
-        np_image = load_image(self.img_path, self.split, row['image_id'])
+        img = self._load_image(self.img_path, self.split, row['image_id'])
+        pt_image = self.processor(images=img, return_tensors="pt")['pixel_values']
 
-        return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'], 'labels': label_tokenized['input_ids'], 'input_imgs': np_image}
+        return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'], 'labels': label_tokenized, 'input_imgs': pt_image}
 
 
 class VLMBatchDataCollator(DefaultDataCollator):
     def __call__(self, batch):
 
-        input_ids = torch.Tensor(batch['input_ids'])
-        attention_mask = torch.LongTensor(batch['attention_mask'])
-        labels = torch.Tensor(batch['labels'])
-        input_imgs = torch.Tensor(np.stack(batch['input_imgs'], axis=0))
+        input_ids = []
+        attention_mask = []
+        labels = []
+        input_imgs = []
 
-        return {'input_ids': input_ids, 'attention_mask': attention_mask, 'labels': labels, 'input_imgs': input_imgs}
+        for b in batch:
+            input_ids.append(torch.LongTensor(b['input_ids']))
+            attention_mask.append(torch.LongTensor(b['attention_mask']))
+            labels.append(torch.LongTensor(b['labels']))
+            input_imgs.append(b['input_imgs'])
+
+        return {'input_ids': torch.stack(input_ids,0), 'attention_mask': torch.stack(attention_mask,0), 'labels': torch.stack(labels,0), 'input_imgs': torch.stack(input_imgs,0)}
 
 
 def vlm_tokenizer(tokenizer: transformers.GemmaTokenizer):
@@ -87,6 +120,8 @@ def vlm_tokenizer(tokenizer: transformers.GemmaTokenizer):
     tokenizer.add_eos_token = False
 
     return tokenizer
+
+
 
 
 
