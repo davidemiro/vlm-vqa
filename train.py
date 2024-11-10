@@ -1,9 +1,8 @@
-import os
-import vlm
-from transformers import Trainer, TrainingArguments, AutoConfig, AutoModel
-from transformers import AutoTokenizer
-import multiprocessing
-import configs
+from vlm.modelling_vlm import VLMGemma2ForCausalLM
+from vlm.configuration_vlm import VLMConfig
+from vlm.utils_vlm import BatchDataCollator
+from transformers import Trainer, TrainingArguments
+from configs import configs
 import datasets
 
 
@@ -12,20 +11,11 @@ config = configs.load_configs()["TRAIN"]
 dataset_train = datasets.load_from_disk(config['train_path'])
 dataset_val = datasets.load_from_disk(config['val_path'])
 
-tokenizer = AutoTokenizer.from_pretrained(config["name"], token=config['token'])
-tokenizer = vlm.vlm_tokenizer(tokenizer)
-
-vlm_config = AutoConfig.from_pretrained(config['name'], token=config['token'])
-vlm_config.visual_embed_dim = 768
-vlm_config.pad_token_id = tokenizer.pad_token_id
-vlm_config.image_token_id = tokenizer.convert_tokens_to_ids('<image>')
-vlm_config.vit_name = config["vit_name"]
+vlm_config = VLMConfig()
+vlm_model = VLMGemma2ForCausalLM.from_pretrained(config['name'], config=vlm_config, token=config['token'])
 
 
-vlm_model = vlm.VLMGemma2ForCausalLM.from_pretrained(config['name'], config=vlm_config, token=config['token'])
-num_patches = (vlm_model.vit.config.patch_size + 2) ** 2 + 1
-
-data_collator_batch = vlm.VLMBatchDataCollator()
+data_collator_batch = BatchDataCollator()
 
 training_args = TrainingArguments(
     output_dir=config["output_dir"],
@@ -45,7 +35,6 @@ trainer = Trainer(
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
     data_collator=data_collator_batch,
-    tokenizer=tokenizer,
 )
 
 
