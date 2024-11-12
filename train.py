@@ -1,4 +1,4 @@
-from vlm.modelling_vlm import VLMGemma2ForCausalLM
+from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
 from vlm.utils_vlm import BatchDataCollator
 from transformers import Trainer, TrainingArguments
@@ -12,7 +12,7 @@ dataset_train = datasets.load_from_disk(config['train_path'])
 dataset_val = datasets.load_from_disk(config['val_path'])
 
 vlm_config = VLMConfig()
-vlm_model = VLMGemma2ForCausalLM.from_pretrained(config['name'], config=vlm_config, token=config['token'])
+vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, token=config['token'])
 
 
 data_collator_batch = BatchDataCollator()

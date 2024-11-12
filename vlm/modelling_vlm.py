@@ -5,7 +5,7 @@ from transformers import Gemma2ForCausalLM, HybridCache, AutoModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 
-class VLMGemma2ForCausalLM(Gemma2ForCausalLM):
+class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
