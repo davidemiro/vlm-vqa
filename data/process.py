@@ -16,8 +16,8 @@ processor = VLMProcessor(vlm_config)
 data_collator_train = RawDataCollator(processor, config['train_img_path'], split='train')
 data_collator_val = RawDataCollator(processor, config['val_img_path'], split='val')
 
-dataset_train = dataset_train.map(data_collator_train, batched=False, num_proc=multiprocessing.cpu_count())
-dataset_val = dataset_val.map(data_collator_val, batched=False, num_proc=multiprocessing.cpu_count())
+dataset_train = dataset_train.map(data_collator_train, batched=False, num_proc=multiprocessing.cpu_count() - 1)
+dataset_val = dataset_val.map(data_collator_val, batched=False, num_proc=multiprocessing.cpu_count() - 1)
 
 dataset_train.save_to_disk(config['train_path'])
 dataset_val.save_to_disk(config['val_path'])
