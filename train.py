@@ -51,7 +51,6 @@ trainer = Trainer(
 
 
 trainer.train()
-processor.push_to
 
 
 
