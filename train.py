@@ -5,7 +5,6 @@ from vlm.processing_vlm import VLMProcessor
 from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
-import multiprocessing
 
 
 config = configs.load_configs()["TRAIN"]
