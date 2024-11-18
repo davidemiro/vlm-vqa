@@ -25,7 +25,7 @@ class VLMProcessor(AutoProcessor):
                                         return_tensors=return_tensors)
 
         label_tokenized = self.tokenizer(label, truncation=True, padding="max_length", max_length=self.context_length,
-                                         return_tensors="np")['input_ids']
+                                         return_tensors=return_tensors)['input_ids']
         label_tokenized[label_tokenized == 0] = -100
 
         pixel_values = self.image_processor(images=image, return_tensors=return_tensors)['pixel_values']
