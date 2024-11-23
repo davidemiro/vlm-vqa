@@ -12,6 +12,7 @@ class VLMProcessor(AutoProcessor):
         self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base')
         self.context_length = config.context_length
         self.num_patches = config.num_patches
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def _vlm_tokenizer(self, tokenizer):
         tokenizer.add_special_tokens({"additional_special_tokens": [IMAGE_TOKEN]})
@@ -31,8 +32,8 @@ class VLMProcessor(AutoProcessor):
 
         pixel_values = self.image_processor(images=image, return_tensors=return_tensors)['pixel_values']
 
-        return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
-                'labels': label_tokenized, 'pixel_values': pixel_values}
+        return {'input_ids': text_tokenized['input_ids'].to(self.device), 'attention_mask': text_tokenized['attention_mask'].to(self.device),
+                'labels': label_tokenized.to(self.device), 'pixel_values': pixel_values.to(self.device)}
 
     def _inference_processing(self, text, image, return_tensors="np"):
         text = IMAGE_TOKEN * self.num_patches + "<bos>" + text
@@ -41,8 +42,8 @@ class VLMProcessor(AutoProcessor):
 
         pixel_values = self.image_processor(images=image, return_tensors=return_tensors)['pixel_values']
 
-        return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
-                'pixel_values': pixel_values}
+        return {'input_ids': text_tokenized['input_ids'].to(self.device), 'attention_mask': text_tokenized['attention_mask'].to(self.device),
+                'pixel_values': pixel_values.to(self.device)}
 
     def __call__(self, text, image, label=None, return_tensors="pt"):
         if label is None:

@@ -40,7 +40,6 @@ training_args = TrainingArguments(
     optim=config["optim"],
     push_to_hub=True,
     remove_unused_columns=False,
-    dataloader_num_workers=8,
 
 )
 
