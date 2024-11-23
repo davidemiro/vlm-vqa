@@ -6,9 +6,10 @@ from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
 import torch
+import multiprocessing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+multiprocessing.set_start_method('spawn', force=True)
 
 config = configs.load_configs()["TRAIN"]
 
