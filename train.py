@@ -9,7 +9,6 @@ import torch
 import multiprocessing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-multiprocessing.set_start_method('spawn', force=True)
 
 config = configs.load_configs()["TRAIN"]
 
