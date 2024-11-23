@@ -5,6 +5,9 @@ from vlm.processing_vlm import VLMProcessor
 from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 config = configs.load_configs()["TRAIN"]
@@ -23,7 +26,7 @@ dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(
 vlm_config = VLMConfig()
 processor = VLMProcessor(vlm_config)
 vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, token=config['token'])
-
+vlm_model.to(device)
 
 data_collator_batch = BatchDataCollator(processor)
 
