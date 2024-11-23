@@ -9,6 +9,8 @@ import torch
 import multiprocessing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.cuda.set_device(1)
+torch.cuda.current_device()
 
 config = configs.load_configs()["TRAIN"]
 
@@ -42,6 +44,8 @@ training_args = TrainingArguments(
     remove_unused_columns=False,
 
 )
+
+print(training_args.device)
 
 trainer = Trainer(
     model=vlm_model,
