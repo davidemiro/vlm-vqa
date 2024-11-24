@@ -46,7 +46,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         text_mask = (input_ids != self.pad_token_id) & (input_ids != self.image_token_id)
         image_mask = input_ids == self.image_token_id
 
-        input_embeds = torch.zeros(batch_size, seq_len, self.config.hidden_size)
+        input_embeds = torch.zeros(batch_size, seq_len, self.config.hidden_size).to('cuda')
 
         text_mask_expanded = text_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
         image_mask_expanded = image_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
