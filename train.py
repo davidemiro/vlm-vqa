@@ -40,7 +40,7 @@ training_args = TrainingArguments(
     optim=config["optim"],
     push_to_hub=True,
     remove_unused_columns=False,
-    pin_memory=False,
+    dataloader_pin_memory=False,
 
 )
 
