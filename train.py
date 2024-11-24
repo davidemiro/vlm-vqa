@@ -9,8 +9,6 @@ import torch
 import multiprocessing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-torch.cuda.set_device(1)
-torch.cuda.current_device()
 
 config = configs.load_configs()["TRAIN"]
 
@@ -42,6 +40,7 @@ training_args = TrainingArguments(
     optim=config["optim"],
     push_to_hub=True,
     remove_unused_columns=False,
+    pin_memory=False,
 
 )
 
