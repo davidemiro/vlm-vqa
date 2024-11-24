@@ -9,6 +9,7 @@ class BatchDataCollator(DefaultDataCollator):
 
     def __init__(self, processor: VLMProcessor) -> None:
         self.processor = processor
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     def __call__(self, batch):
 
@@ -26,7 +27,7 @@ class BatchDataCollator(DefaultDataCollator):
             labels.append(row_dict['labels'])
             pixel_values.append(row_dict['pixel_values'])
 
-        return {'input_ids': torch.cat(input_ids,0), 'attention_mask': torch.cat(attention_masks,0), 'labels': torch.cat(labels,0), 'pixel_values': torch.cat(pixel_values,0)}
+        return {'input_ids': torch.cat(input_ids, 0).to(self.device), 'attention_mask': torch.cat(attention_masks, 0).to(self.device), 'labels': torch.cat(labels, 0).to(self.device), 'pixel_values': torch.cat(pixel_values, 0).to(self.device)}
 
     def _load_image(self, path, split, image_id):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
