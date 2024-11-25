@@ -9,7 +9,7 @@ class BatchDataCollator(DefaultDataCollator):
 
     def __init__(self, processor: VLMProcessor) -> None:
         self.processor = processor
-        self.device = torch.device('cuda')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __call__(self, batch):
 

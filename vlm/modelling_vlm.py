@@ -19,6 +19,8 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         with torch.no_grad():
             self.embed_tokens.weight[:self.config.vocab_size, :] = self.model.embed_tokens.weight
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -46,7 +48,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         text_mask = (input_ids != self.pad_token_id) & (input_ids != self.image_token_id)
         image_mask = input_ids == self.image_token_id
 
-        input_embeds = torch.zeros(batch_size, seq_len, self.config.hidden_size).to('cuda')
+        input_embeds = torch.zeros(batch_size, seq_len, self.config.hidden_size).to(self.device)
 
         text_mask_expanded = text_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
         image_mask_expanded = image_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
