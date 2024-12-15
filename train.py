@@ -48,6 +48,11 @@ training_args = TrainingArguments(
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
+    load_best_model_at_end=True,
+    metric_for_best_model="accuracy",
+    logging_steps=10,
+    logging_dir="./logs",
+
 
 )
 
