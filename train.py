@@ -31,7 +31,7 @@ target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "
 lora_config = LoraConfig(
     r=4, lora_alpha=16, target_modules=target_modules, lora_dropout=0.1, bias="none", task_type="CAUSAL_LM"
 )
-lora_model = get_peft_model(vlm_model, config)
+lora_model = get_peft_model(vlm_model, lora_config)
 
 vlm_model.to(device)
 
@@ -54,7 +54,7 @@ training_args = TrainingArguments(
 print(training_args.device)
 
 trainer = Trainer(
-    model=vlm_model,
+    model=lora_model,
     args=training_args,
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
