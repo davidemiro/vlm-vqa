@@ -26,6 +26,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         attention_mask: Optional[torch.Tensor] = None,
         position_ids: Optional[torch.LongTensor] = None,
         past_key_values: Optional[HybridCache] = None,
+        inputs_embeds: Optional[torch.Tensor] = None,
         text_embeds: Optional[torch.FloatTensor] = None,
         pixel_values: Optional[torch.FloatTensor] = None,
         labels: Optional[torch.LongTensor] = None,
