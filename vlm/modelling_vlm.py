@@ -53,7 +53,8 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         text_mask_expanded = text_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
         image_mask_expanded = image_mask.unsqueeze(-1).expand(-1, -1, self.config.hidden_size)
 
-        input_embeds = torch.where(text_mask_expanded, text_embeds, input_embeds)
+        input_embeds = torch.where(text_mask_expanded, text_embeds, input_embeds).to(torch.bfloat16)
+
         input_embeds = input_embeds.masked_scatter(image_mask_expanded, visual_embeds)
 
         return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
