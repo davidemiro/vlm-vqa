@@ -14,12 +14,10 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
 
-        embed_tokens = nn.Embedding(self.config.vocab_size + 1, self.config.hidden_size)
+        self.embed_tokens = nn.Embedding(self.config.vocab_size + 1, self.config.hidden_size)
 
         with torch.no_grad():
-            embed_tokens.weight[:self.config.vocab_size, :] = self.model.embed_tokens.weight
-            self.model.embed_tokens = embed_tokens
-
+            self.embed_tokens.weight[:self.config.vocab_size, :] = self.model.embed_tokens.weight
 
 
     def forward(
@@ -45,7 +43,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
-        text_embeds = self.model.embed_tokens(input_ids)
+        text_embeds = self.embed_tokens(input_ids)
 
         text_mask = (input_ids != self.pad_token_id) & (input_ids != self.image_token_id)
         image_mask = input_ids == self.image_token_id
