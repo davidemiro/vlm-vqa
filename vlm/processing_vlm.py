@@ -9,6 +9,7 @@ class VLMProcessor(AutoProcessor):
     def __init__(self, config: VLMConfig) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it')
+        self.tokenizer = self._vlm_tokenizer(self.tokenizer)
         self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base')
         self.context_length = config.context_length
         self.num_patches = config.num_patches
