@@ -9,7 +9,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vit = AutoModel.from_pretrained('facebook/dinov2-base').to(torch.bfloat16)
+        self.vit = AutoModel.from_pretrained('facebook/dinov2-base')
 
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
