@@ -9,7 +9,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vit = AutoModel.from_pretrained('facebook/dinov2-base')
+        self.vit = AutoModel.from_pretrained('facebook/dinov2-base', torch_dtype=torch.bfloat16)
 
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
@@ -18,6 +18,8 @@ class VLMForCausalLM(Gemma2ForCausalLM):
 
         with torch.no_grad():
             self.embed_tokens.weight[:self.config.vocab_size, :] = self.model.embed_tokens.weight
+        self.embed_tokens.requires_grad = False
+        self.model.embed_tokens.requires_grad = False
 
 
     def forward(

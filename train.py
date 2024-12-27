@@ -25,7 +25,7 @@ dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(
 
 vlm_config = VLMConfig()
 processor = VLMProcessor(vlm_config)
-vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, token=config['token']).to(torch.bfloat16)
+vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16, token=config['token'])
 
 target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "wte"]
 lora_config = LoraConfig(
