@@ -3,8 +3,8 @@ from torch import nn
 import torch
 from transformers import Gemma2ForCausalLM, HybridCache, Dinov2Model
 from transformers.modeling_outputs import CausalLMOutputWithPast
-from configuration_vlm import VLMConfig
-from processing_vlm import VLMProcessor
+from vlm.configuration_vlm import VLMConfig
+from vlm.processing_vlm import VLMProcessor
 
 
 class VLMForCausalLM(Gemma2ForCausalLM):
