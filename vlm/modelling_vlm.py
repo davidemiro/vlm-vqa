@@ -1,15 +1,20 @@
 from typing import Optional, Union, Tuple
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, AutoModel
+from transformers import Gemma2ForCausalLM, HybridCache, AutoModel, Dinov2Model
 from transformers.modeling_outputs import CausalLMOutputWithPast
+from vlm.modelling_vlm import VLMForCausalLM
+from vlm.configuration_vlm import VLMConfig
+from vlm.utils_vlm import BatchDataCollator
+from vlm.processing_vlm import VLMProcessor
+
 
 
 class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vit = AutoModel.from_pretrained('facebook/dinov2-base', torch_dtype=torch.bfloat16)
+        self.vit = Dinov2Model(config=config.vit_config)
 
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
@@ -60,3 +65,14 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         input_embeds = input_embeds.masked_scatter(image_mask_expanded, visual_embeds)
 
         return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+
+
+def get_vlm(config):
+
+    vlm_config = VLMConfig()
+    processor = VLMProcessor(vlm_config)
+    vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
+                                               token=config['token'])
+    vlm_model.vit = Dinov2Model.from_ptetrained("facebook/dinov2-base", config=config.vit_config)
+
+    return processor, vlm_model

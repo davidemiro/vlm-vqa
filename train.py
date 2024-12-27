@@ -1,4 +1,4 @@
-from vlm.modelling_vlm import VLMForCausalLM
+from vlm.modelling_vlm import VLMForCausalLM, get_vlm
 from vlm.configuration_vlm import VLMConfig
 from vlm.utils_vlm import BatchDataCollator
 from vlm.processing_vlm import VLMProcessor
@@ -23,17 +23,15 @@ dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] 
 dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
 
 
-vlm_config = VLMConfig()
-processor = VLMProcessor(vlm_config)
-vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16, token=config['token'])
+processor, vlm_model = get_vlm(config)
 
 target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "wte"]
 lora_config = LoraConfig(
-    r=4, lora_alpha=16, target_modules=target_modules, lora_dropout=0.1, bias="none", task_type="CAUSAL_LM"
+    r=4, lora_alpha=16, lora_dropout=0.1, bias="none", task_type="CAUSAL_LM"
 )
 lora_model = get_peft_model(vlm_model, lora_config)
 
-vlm_model.to(device)
+lora_model.to(device)
 
 data_collator_batch = BatchDataCollator(processor)
 
