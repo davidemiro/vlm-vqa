@@ -38,13 +38,15 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         num_logits_to_keep: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
-        batch_size, seq_len = input_ids.shape
-
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
+        print(input_ids.shape)
         input_ids = input_ids[:, :self.num_patches]
+        print(input_ids.shape)
+        print(visual_embeds.shape)
 
         text_embeds = self.model.embed_tokens(input_ids)
+        print(text_embeds.shape)
 
         input_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
 
