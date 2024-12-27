@@ -70,6 +70,6 @@ def get_vlm(config):
     processor = VLMProcessor(vlm_config)
     vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
                                                token=config['token'])
-    vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=torch.bfloat16)
+    vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.bfloat16)
 
     return processor, vlm_model
