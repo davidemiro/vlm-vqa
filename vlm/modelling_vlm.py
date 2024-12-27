@@ -1,13 +1,10 @@
 from typing import Optional, Union, Tuple
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, AutoModel, Dinov2Model
+from transformers import Gemma2ForCausalLM, HybridCache, Dinov2Model
 from transformers.modeling_outputs import CausalLMOutputWithPast
-from vlm.modelling_vlm import VLMForCausalLM
-from vlm.configuration_vlm import VLMConfig
-from vlm.utils_vlm import BatchDataCollator
-from vlm.processing_vlm import VLMProcessor
-
+from configuration_vlm import VLMConfig
+from processing_vlm import VLMProcessor
 
 
 class VLMForCausalLM(Gemma2ForCausalLM):
