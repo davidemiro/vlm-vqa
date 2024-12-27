@@ -2,27 +2,16 @@ from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer
 from vlm.configuration_vlm import VLMConfig
 import torch
 
-IMAGE_TOKEN = "<image>"
-
-
 class VLMProcessor(AutoProcessor):
     def __init__(self, config: VLMConfig) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it')
-        self.tokenizer = self._vlm_tokenizer(self.tokenizer)
         self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base')
         self.context_length = config.context_length
         self.num_patches = config.num_patches
 
-    def _vlm_tokenizer(self, tokenizer):
-        tokenizer.add_special_tokens({"additional_special_tokens": [IMAGE_TOKEN]})
-        tokenizer.add_bos_token = False
-        tokenizer.add_eos_token = False
-
-        return tokenizer
-
     def _training_processing(self, text, image, label, return_tensors="pt"):
-        text = IMAGE_TOKEN * self.num_patches + "<bos>" + text + label
+        text = "<bos>" + text + label
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
@@ -36,7 +25,7 @@ class VLMProcessor(AutoProcessor):
                 'labels': label_tokenized, 'pixel_values': pixel_values}
 
     def _inference_processing(self, text, image, return_tensors="np"):
-        text = IMAGE_TOKEN * self.num_patches + "<bos>" + text
+        text = "<bos>" + text
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
