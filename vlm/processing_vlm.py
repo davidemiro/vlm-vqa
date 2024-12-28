@@ -8,7 +8,7 @@ class VLMProcessor(AutoProcessor):
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it')
         self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base')
         self.context_length = config.context_length
-        self.num_patches = config.num_patches
+        self.num_patches = 64
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
         text = "<bos>" + text + label
