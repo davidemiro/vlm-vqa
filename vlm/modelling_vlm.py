@@ -64,7 +64,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
 
 def get_vlm(config):
 
-    vlm_config = VLMConfig(text_length=int(config["text_length"]), visual_embed_dim=int(config["visual_embed_dim"]))
+    vlm_config = VLMConfig(text_length=int(config["text_length"]), visual_length=int(config["visual_length"]), visual_embed_dim=int(config["visual_embed_dim"]))
     processor = VLMProcessor(vlm_config)
     vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
                                                token=config['token'])
