@@ -41,23 +41,14 @@ class VLMForCausalLM(Gemma2ForCausalLM):
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
-        print(visual_embeds.shape)
         visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, num_patches]
-        print(visual_embeds.shape)
         visual_embeds = self.linear_projector_visual_embedding(visual_embeds) #[batch_size, hidden_size, new_num_patches]
-        print(visual_embeds.shape)
         visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, new_num_patches]
-        print(visual_embeds.shape)
 
-        print(input_ids.shape)
         input_ids = input_ids[:, self.num_patches:]
-        print(input_ids.shape)
 
         text_embeds = self.model.embed_tokens(input_ids)
-        print(text_embeds.shape)
-
         input_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
-        print(input_embeds.shape)
 
         return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
