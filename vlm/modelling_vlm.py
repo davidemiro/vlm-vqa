@@ -11,9 +11,9 @@ class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.linear_projector_visual_embedding = nn.Linear(config.num_patches, 64)
+        self.linear_projector_visual_embedding = nn.Linear(config.old_num_patches, config.num_patches)
         self.vit = Dinov2Model(config=config.vit_config)
-        self.num_patches = 64
+        self.num_patches = config.num_patches
 
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
