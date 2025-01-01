@@ -1,0 +1,9 @@
+model_deployments:
+  - name: davidemiro/vqavlm
+    model_name: davidemiro/vqavlm
+    tokenizer_name: google/gemma-2-2b-it
+    max_sequence_length: 32
+    client_spec:
+      class_name: "evaluation.helm.client.VLMGemmaClient"
+      args:
+        pretrained_model_name_or_path: davidemiro/vqavlm
