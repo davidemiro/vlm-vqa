@@ -51,6 +51,8 @@ training_args = TrainingArguments(
     metric_for_best_model="accuracy",
     logging_steps=10,
     logging_dir="./logs",
+    gradient_checkpointing=True,
+    deepspeed="deepspeed/ds_config.json",
 
 
 )
