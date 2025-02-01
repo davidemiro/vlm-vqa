@@ -5,7 +5,7 @@ from vlm.processing_vlm import VLMProcessor
 import os
 from vlm.configuration_vlm import VLMConfig
 from transformers import Dinov2Model
-from modelling_vlm import VLMForCausalLM
+from modelling_vlm import VLMForCausalLM, VLMForConditionalGeneration
 
 
 class BatchDataCollator(DefaultDataCollator):
@@ -47,3 +47,11 @@ def get_vlm(config):
     vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.bfloat16)
 
     return processor, vlm_model
+
+def get_vlm_generative(config):
+    vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
+    processor = VLMProcessor(vlm_config, config['token'])
+
+    vlm_generative = VLMForConditionalGeneration(vlm_config)
+
+    return processor, vlm_generative

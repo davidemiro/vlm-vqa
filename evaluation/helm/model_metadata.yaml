@@ -1,7 +1,7 @@
 models:
-  - name: davidemiro/vqavlm
-    display_name: VqAVLM (3B)
-    description: VqAVLM (3B parameters). VqAVLM is a lightweight vision-language model inspired by PaliGemma and based on open components such as DinoV2 and Gemma2 language model.
+  - name: davidemiro/vlm-vqa
+    display_name: vlm-vqa (3B)
+    description: vlm-vqa (3B parameters). VLMVQA is a lightweight vision-language model inspired by PaliGemma and based on open components such as DinoV2 and Gemma2 language model.
     creator_organization_name: davidemiro
     access: open
     num_parameters: 3B
