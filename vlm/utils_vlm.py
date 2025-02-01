@@ -3,6 +3,9 @@ from transformers import DefaultDataCollator
 from PIL import Image
 from vlm.processing_vlm import VLMProcessor
 import os
+from vlm.configuration_vlm import VLMConfig
+from transformers import Dinov2Model
+from modelling_vlm import VLMForCausalLM
 
 
 class BatchDataCollator(DefaultDataCollator):
@@ -33,3 +36,14 @@ class BatchDataCollator(DefaultDataCollator):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
         img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
         return img
+
+
+def get_vlm(config):
+
+    vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
+    processor = VLMProcessor(vlm_config,config['token'])
+    vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
+                                               token=config['token'])
+    vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.bfloat16)
+
+    return processor, vlm_model

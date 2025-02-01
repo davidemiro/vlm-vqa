@@ -3,10 +3,10 @@ from vlm.configuration_vlm import VLMConfig
 import torch
 
 class VLMProcessor(AutoProcessor):
-    def __init__(self, config: VLMConfig) -> None:
+    def __init__(self, config: VLMConfig, token: str) -> None:
 
-        self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it')
-        self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base')
+        self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
+        self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
         self.context_length = config.context_length
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
