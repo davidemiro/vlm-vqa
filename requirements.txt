@@ -3,7 +3,8 @@ pandas==2.2.3
 pillow==11.0.0
 torch==2.5.1
 torchinfo
-deepspeed==0.16.2
+huggingface_hub
+deepspeed
 transformers==4.46.3
 
 
