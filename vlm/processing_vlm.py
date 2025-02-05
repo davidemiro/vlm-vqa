@@ -18,7 +18,7 @@ class VLMProcessor(AutoProcessor):
                                          return_tensors=return_tensors)['input_ids']
         label_tokenized[label_tokenized == 0] = -100
 
-        pixel_values = self.image_processor(images=image, return_tensors=return_tensors)['pixel_values']
+        pixel_values = self.image_processor(images=image, padding=True, return_tensors=return_tensors)['pixel_values']
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'labels': label_tokenized, 'pixel_values': pixel_values}
@@ -28,7 +28,7 @@ class VLMProcessor(AutoProcessor):
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
-        pixel_values = self.image_processor(images=image, return_tensors=return_tensors)['pixel_values']
+        pixel_values = self.image_processor(images=image, padding=True, return_tensors=return_tensors)['pixel_values']
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'pixel_values': pixel_values}
