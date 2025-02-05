@@ -86,36 +86,4 @@ process(spark, config['train_annotations_path'], config['train_questions_path'],
 process(spark, config['val_annotations_path'], config['val_questions_path'], config['val_path'], config['val_img_path'],bool(int(config["zip"])))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Step 4: Inspect the PySpark DataFrame (optional)
-spark_df.show()
-
-# Step 5: Convert PySpark DataFrame to Pandas DataFrame
-pandas_df = spark_df.toPandas()
-
-# Step 6: Convert Pandas DataFrame to Hugging Face Dataset
-hf_dataset = Dataset.from_pandas(pandas_df)
-
-# Step 7: Optionally save the Hugging Face Dataset locally or push to Hugging Face Hub
-# Save dataset locally
-hf_dataset.save_to_disk('path_to_save_directory')
-
-# Or, push to Hugging Face Hub (Optional)
-hf_dataset.push_to_hub("your_dataset_name")
-
-# Step 8: Stop the Spark session (optional but recommended)
 spark.stop()
