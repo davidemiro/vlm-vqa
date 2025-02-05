@@ -1,12 +1,11 @@
-from vlm.modelling_vlm import VLMForCausalLM, get_vlm
+from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
-from vlm.utils_vlm import BatchDataCollator
+from vlm.utils_vlm import BatchDataCollator, get_vlm
 from vlm.processing_vlm import VLMProcessor
 from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
 import torch
-from peft import LoraConfig, get_peft_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

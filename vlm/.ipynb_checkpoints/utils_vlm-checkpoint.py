@@ -1,11 +1,11 @@
 import torch
-from transformers import DefaultDataCollator, Dinov2Model
+from transformers import DefaultDataCollator
 from PIL import Image
+from transformers import Dinov2Model
 import os
-
-from vlm.configuration_vlm import VLMConfig
 from vlm.processing_vlm import VLMProcessor
-from vlm.modelling_vlm import VLMForCausalLM,VLMForConditionalGeneration
+from vlm.configuration_vlm import VLMConfig
+from vlm.modelling_vlm import VLMForCausalLM, VLMForConditionalGeneration
 
 
 class BatchDataCollator(DefaultDataCollator):

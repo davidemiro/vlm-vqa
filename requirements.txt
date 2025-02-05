@@ -1,12 +1,12 @@
-datasets==3.1.0
-pandas==2.2.3
-pillow==11.0.0
+pandas
+pillow
 torch
 torchinfo
+torchvision
 huggingface_hub
+transformers
+datasets
 accelerate
-transformers==4.46.3
-deepspe
-
+deepspeed
 
 
