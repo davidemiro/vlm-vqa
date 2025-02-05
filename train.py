@@ -43,7 +43,9 @@ training_args = TrainingArguments(
     logging_steps=10,
     logging_dir="./logs",
     gradient_checkpointing=True,
+    bf16=True,
     deepspeed="deepspeed/ds_config.json",
+
 
 
 )
