@@ -24,7 +24,7 @@
     "train_batch_size": 4,
     "train_micro_batch_size_per_gpu": 4,
     "wall_clock_breakdown": false,
-    "bf16": {
+    "fp16": {
         "enabled": true
     },
     "optimizer": {
