@@ -1,26 +1,4 @@
 {
-  "zero_optimization": {
-    "stage": 2
-  },
-  "optimizer": {
-    "type": "AdamW",
-    "params": {
-      "lr": "auto",
-      "betas": "auto",
-      "eps": "auto",
-      "weight_decay": "auto"
-    }
-  },
-  "bf16": {
-        "enabled": "auto"
-  },
-  "train_micro_batch_size_per_gpu": "auto",
-  "train_batch_size": "auto",
-  "gradient_accumulation_steps": "auto",
-  "gradient_clipping": "auto"
-}
-
-{
     "zero_optimization": {
         "stage": 3,
         "offload_optimizer": {
@@ -43,8 +21,8 @@
     },
     "gradient_clipping": 1.0,
     "steps_per_print": 2000,
-    "train_batch_size": 256,
-    "train_micro_batch_size_per_gpu": 64,
+    "train_batch_size": 4,
+    "train_micro_batch_size_per_gpu": 4,
     "wall_clock_breakdown": false,
     "bf16": {
         "enabled": true
