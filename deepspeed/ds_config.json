@@ -28,7 +28,8 @@
         "enabled": true
     },
     "optimizer": {
-        "type": "AdamW",
+        "type": "Adam",
+        "torch_adam": true,
         "params": {
             "lr": 1e-5,
             "betas": [0.9, 0.999],
