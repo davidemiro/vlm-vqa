@@ -1,10 +1,11 @@
-pandas
-pillow
+pandas==2.2.3
+ninja
+pillow==11.0.0
 torch
 torchinfo
 torchvision
 huggingface_hub
-transformers
+transformers==4.46.3
 datasets
 accelerate
 deepspeed
