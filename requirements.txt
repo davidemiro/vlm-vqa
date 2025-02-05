@@ -6,8 +6,10 @@ torchinfo
 torchvision
 huggingface_hub
 transformers==4.46.3
+perf
 datasets
 accelerate
+peft
 deepspeed
 
 

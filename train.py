@@ -6,6 +6,7 @@ from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
 import torch
+from peft import LoraConfig, get_peft_model
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -23,6 +24,14 @@ dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(
 
 
 processor, vlm_model = get_vlm(config)
+
+target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "wte"]
+lora_config = LoraConfig(
+    r=4, lora_alpha=16, target_modules=target_modules, lora_dropout=0.1, bias="none", task_type="CAUSAL_LM"
+)
+lora_model = get_peft_model(vlm_model, lora_config)
+
+vlm_model.to(device)
 
 data_collator_batch = BatchDataCollator(processor)
 
@@ -54,7 +63,7 @@ training_args = TrainingArguments(
 print(training_args.device)
 
 trainer = Trainer(
-    model=vlm_model,
+    model=lora_model,
     args=training_args,
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
