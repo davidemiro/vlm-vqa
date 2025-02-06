@@ -44,7 +44,7 @@ training_args = TrainingArguments(
     per_device_train_batch_size=int(config["batch_size"]),
     num_train_epochs=int(config["num_train_epochs"]),
     optim=config["optim"],
-    push_to_hub=True,
+    push_to_hub=False,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
     load_best_model_at_end=True,
@@ -72,6 +72,9 @@ trainer = Trainer(
 
 
 trainer.train()
+
+lora_model.push_to_hub("vlm-vqa-v0.0")
+processor.push_to_hub("vlm-vqa-processor-v0.0")
 
 
 
