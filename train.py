@@ -48,8 +48,6 @@ training_args = TrainingArguments(
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
-    load_best_model_at_end=True,
-    metric_for_best_model="accuracy",
     logging_steps=10,
     logging_dir="./logs",
     gradient_checkpointing=True,
@@ -69,7 +67,6 @@ trainer = Trainer(
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
     data_collator=data_collator_batch,
-    compute_metrics=compute_metrics,
 )
 
 
