@@ -1,8 +1,7 @@
-from datasets import load_metric
-import numpy as np
-metric = load_metric('accuracy')
+from sklearn.metrics import accuracy_score
 
-def compute_metrics(eval_pred):
-    predictions, labels = eval_pred
-    predictions = np.argmax(predictions, axis=1)
-    return metric.compute(predictions=predictions, references=labels)
+def compute_metrics(p):
+    predictions, labels = p
+    preds = predictions.argmax(axis=-1)  # Get the index of the maximum probability
+    accuracy = accuracy_score(labels, preds)
+    return {"eval_accuracy": accuracy}
