@@ -18,7 +18,7 @@ class VLMProcessor(AutoProcessor):
                                          return_tensors=return_tensors)['input_ids']
         label_tokenized[label_tokenized == 0] = -100
 
-        pixel_values = torch.Tensor(self.image_processor(images=image, return_tensors=return_tensors)['pixel_values'], dtype=float)
+        pixel_values = torch.Tensor(self.image_processor(images=image, return_tensors="np")['pixel_values'], dtype=float)
 
         print(pixel_values.shape)
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
@@ -29,7 +29,7 @@ class VLMProcessor(AutoProcessor):
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
-        pixel_values = torch.Tensor(self.image_processor(images=image, return_tensors=return_tensors)['pixel_values'], dtype=float)
+        pixel_values = torch.Tensor(self.image_processor(images=image, return_tensors="np")['pixel_values'], dtype=float)
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'pixel_values': pixel_values}
