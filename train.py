@@ -7,6 +7,7 @@ from configs import configs
 from data.raw import get_dataset
 import torch
 from peft import LoraConfig, get_peft_model
+from evaluation.metrics import compute_metrics
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -68,6 +69,7 @@ trainer = Trainer(
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
     data_collator=data_collator_batch,
+    compute_metrics=compute_metrics,
 )
 
 
