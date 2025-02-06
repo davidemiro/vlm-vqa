@@ -2,7 +2,7 @@ from transformers import Gemma2Config, AutoConfig
 
 
 class VLMConfig(Gemma2Config):
-    def __init__(self, text_length=32, num_patches=64, visual_embed_dim=768):
+    def __init__(self, text_length=32, num_patches=64, visual_embed_dim=768, **kwargs):
         pretrained_config = AutoConfig.from_pretrained("google/gemma-2-2b-it")
         super().__init__(**pretrained_config.to_dict())
         self.visual_embed_dim = visual_embed_dim
