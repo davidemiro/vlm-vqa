@@ -21,8 +21,8 @@
     },
     "gradient_clipping": 1.0,
     "steps_per_print": 2000,
-    "train_batch_size": 1,
-    "train_micro_batch_size_per_gpu": 1,
+    "train_batch_size": 4,
+    "train_micro_batch_size_per_gpu": 4,
     "wall_clock_breakdown": false,
     "fp16": {
         "enabled": true

@@ -1,15 +1,14 @@
 pandas==2.2.3
-ninja
+ninja==1.11.1
 pillow==11.0.0
-torch
-torchinfo
-torchvision
+torch==2.6.0
+torchinfo==1.7.2
+torchvision==0.21.0
 huggingface_hub
 transformers==4.46.3
-perf
-datasets
-accelerate
-peft
+datasets==3.2.0
+accelerate==0.34.2
+peft==0.14.0
 deepspeed
 
 
