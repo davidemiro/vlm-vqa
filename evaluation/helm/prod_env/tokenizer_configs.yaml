@@ -1,0 +1,6 @@
+tokenizer_configs:
+  - name: google/gemma-2b
+    tokenizer_spec:
+      class_name: "helm.tokenizers.huggingface_tokenizer.HuggingFaceTokenizer"
+    end_of_text_token: "<eos>"
+    prefix_token: "<bos>"
