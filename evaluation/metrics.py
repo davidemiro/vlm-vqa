@@ -1,7 +1,8 @@
-from sklearn.metrics import accuracy_score
+import evaluate
 
-def compute_metrics(p):
+clf_metrics = evaluate.load("accuracy")
+
+def compute_accuracy(p):
     predictions, labels = p
     preds = predictions.argmax(axis=-1)  # Get the index of the maximum probability
-    accuracy = accuracy_score(labels, preds)
-    return {"eval_accuracy": accuracy}
+    return clf_metrics(labels, preds)

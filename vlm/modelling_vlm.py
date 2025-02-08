@@ -50,7 +50,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.linear_projector_visual_embedding = nn.Linear(config.old_num_patches, config.num_patches)
         self.vit = Dinov2Model(config=config.vit_config)
         self.num_patches = config.num_patches
 
@@ -80,9 +79,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
-        visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, num_patches]
-        visual_embeds = self.linear_projector_visual_embedding(visual_embeds) #[batch_size, hidden_size, new_num_patches]
-        visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, new_num_patches]
 
         input_ids = input_ids[:, self.num_patches:]
 

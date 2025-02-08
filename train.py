@@ -7,7 +7,9 @@ from configs import configs
 from data.raw import get_dataset
 import torch
 from peft import LoraConfig, get_peft_model
-from evaluation.metrics import compute_metrics
+from evaluation.metrics import compute_accuracy
+
+import multiprocessing
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -48,6 +50,9 @@ training_args = TrainingArguments(
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
+    load_best_model_at_end=True,
+    metric_for_best_model="accuracy",
+    dataloader_num_workers= multiprocessing.cpu_count() - 1 if multiprocessing.cpu_count() > 0 else 0,
     logging_steps=10,
     logging_dir="./logs",
     gradient_checkpointing=True,
@@ -59,18 +64,19 @@ training_args = TrainingArguments(
 
 )
 
-print(training_args.device)
-
 trainer = Trainer(
     model=lora_model,
     args=training_args,
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
     data_collator=data_collator_batch,
+    compute_metrics=compute_accuracy,
 )
 
 
 trainer.train()
+
+processor.push_to_hub(config["output_dir"])
 
 
 
