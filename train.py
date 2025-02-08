@@ -1,5 +1,5 @@
 import multiprocessing
-mp.set_start_method("spawn", force=True)
+multiprocessing.set_start_method("spawn", force=True)
 
 from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
