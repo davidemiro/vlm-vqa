@@ -7,7 +7,7 @@ class VLMVQAProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
-        self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
+        self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
         self.context_length = config.context_length
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
@@ -19,7 +19,7 @@ class VLMVQAProcessor(ProcessorMixin):
                                          return_tensors=return_tensors)['input_ids']
         label_tokenized[label_tokenized == 0] = -100
 
-        pixel_values = torch.tensor(self.image_processor(images=image, return_tensors="np")['pixel_values'],
+        pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
                                     requires_grad=True, dtype=torch.float16)
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'labels': label_tokenized, 'pixel_values': pixel_values}
@@ -29,7 +29,7 @@ class VLMVQAProcessor(ProcessorMixin):
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
-        pixel_values = torch.tensor(self.image_processor(images=image, return_tensors="np")['pixel_values'],
+        pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
                                     requires_grad=True, dtype=torch.float16)
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
@@ -44,7 +44,7 @@ class VLMVQAProcessor(ProcessorMixin):
         @property
         def model_input_names(self):
             tokenizer_input_names = self.tokenizer.model_input_names
-            image_processor_input_names = self.image_processor.model_input_names
+            image_processor_input_names = self.feature_extractor.model_input_names
             return list(dict.fromkeys(tokenizer_input_names + image_processor_input_names))
 
     def __call__(self, text, image, label=None, return_tensors="pt"):
