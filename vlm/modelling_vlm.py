@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Union, Tuple, List
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, Dinov2Model, GenerationMixin, Cache, StaticCache
+from transformers import Gemma2ForCausalLM, HybridCache, Dinov2Model, GenerationMixin, Cache, StaticCache, AutoModel
 from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
 
@@ -50,7 +50,7 @@ class VLMVQAForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vit = Dinov2Model(config=config.vit_config)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base")
         self.num_patches = config.num_patches
 
         self.image_token_id = self.config.image_token_id
