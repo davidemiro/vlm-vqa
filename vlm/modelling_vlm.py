@@ -46,7 +46,7 @@ class VLMCausalLMOutputWithPast(ModelOutput):
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     image_hidden_states: Optional[torch.FloatTensor] = None
 
-class VLMForCausalLM(Gemma2ForCausalLM):
+class VLMVQAForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
@@ -88,7 +88,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
 
-class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
+class VLMVQAForConditionalGeneration(VLMVQAForCausalLM, GenerationMixin):
 
     def __init__(self, config: VLMConfig):
         super().__init__(config)

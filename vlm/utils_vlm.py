@@ -4,13 +4,13 @@ from PIL import Image
 import os
 
 from vlm.configuration_vlm import VLMConfig
-from vlm.processing_vlm import VLMProcessor
-from vlm.modelling_vlm import VLMForCausalLM,VLMForConditionalGeneration
+from vlm.processing_vlm import VLMVQAProcessor
+from vlm.modelling_vlm import VLMVQAForCausalLM,VLMVQAForConditionalGeneration
 
 
 class BatchDataCollator(DefaultDataCollator):
 
-    def __init__(self, processor: VLMProcessor) -> None:
+    def __init__(self, processor: VLMVQAProcessor) -> None:
         self.processor = processor
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -43,17 +43,17 @@ class BatchDataCollator(DefaultDataCollator):
 def get_vlm(config):
 
     vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
-    processor = VLMProcessor(vlm_config,config['token'])
-    vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
-                                               token=config['token'])
+    processor = VLMVQAProcessor(vlm_config, config['token'])
+    vlm_model = VLMVQAForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, torch_dtype=torch.bfloat16,
+                                                  token=config['token'])
     vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.bfloat16)
 
     return processor, vlm_model
 
 def get_vlm_generative(config):
     vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
-    processor = VLMProcessor(vlm_config, config['token'])
+    processor = VLMVQAProcessor(vlm_config, config['token'])
 
-    vlm_generative = VLMForConditionalGeneration(vlm_config)
+    vlm_generative = VLMVQAForConditionalGeneration(vlm_config)
 
     return processor, vlm_generative

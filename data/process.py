@@ -1,7 +1,7 @@
 from raw import get_dataset
 from configs import configs
 from vlm.configuration_vlm import VLMConfig
-from vlm.processing_vlm import VLMProcessor
+from vlm.processing_vlm import VLMVQAProcessor
 from raw import RawDataCollator
 import multiprocessing
 
@@ -11,7 +11,7 @@ dataset_train = get_dataset(config['train_annotations_path'], config['train_ques
 dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
 
 vlm_config = VLMConfig()
-processor = VLMProcessor(vlm_config)
+processor = VLMVQAProcessor(vlm_config)
 
 data_collator_train = RawDataCollator(processor, config['train_img_path'], split='train')
 data_collator_val = RawDataCollator(processor, config['val_img_path'], split='val')

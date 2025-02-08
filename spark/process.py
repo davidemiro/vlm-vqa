@@ -4,7 +4,7 @@ from configs import configs
 from pyspark.sql import functions as F
 from PIL import Image
 from vlm.configuration_vlm import VLMConfig
-from vlm.processing_vlm import VLMProcessor
+from vlm.processing_vlm import VLMVQAProcessor
 import os
 import zipfile
 
@@ -79,7 +79,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
-processor = VLMProcessor(vlm_config)
+processor = VLMVQAProcessor(vlm_config)
 
 process(spark, config['train_annotations_path'], config['train_questions_path'], config['train_path'], config['train_img_path'],bool(int(config["zip"])))
 
