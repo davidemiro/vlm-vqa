@@ -1,9 +1,9 @@
-from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer
+from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer, ProcessorMixin
 from vlm.configuration_vlm import VLMConfig
 import torch
 
 
-class VLMVQAProcessor(AutoProcessor):
+class VLMVQAProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
