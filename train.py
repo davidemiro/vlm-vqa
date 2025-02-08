@@ -44,7 +44,6 @@ training_args = TrainingArguments(
     weight_decay=float(config["weight_decay"]),
     per_device_train_batch_size=int(config["batch_size"]),
     num_train_epochs=int(config["num_train_epochs"]),
-    optim=config["optim"],
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
