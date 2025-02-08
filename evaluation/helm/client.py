@@ -42,7 +42,7 @@ _models_lock: Lock = Lock()
 _models: Dict[str, Optional[VLMForConditionalGeneration]] = {}
 
 
-class VLMVQAClient(CachingClient):
+class VLMClient(CachingClient):
     """
     VLM is a lightweight vision-language model inspired by PaliGemma and based on open components such
     as DinoV2 and Gemma2 language model.
