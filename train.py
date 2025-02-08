@@ -1,5 +1,7 @@
-import multiprocessing
-multiprocessing.set_start_method("spawn", force=True)
+import torch.multiprocessing as mp
+
+if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
 
 from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
@@ -11,6 +13,7 @@ from data.raw import get_dataset
 import torch
 from peft import LoraConfig, get_peft_model
 from evaluation.metrics import compute_accuracy
+import multiprocessing
 
 
 
