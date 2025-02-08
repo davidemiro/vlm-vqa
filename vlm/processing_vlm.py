@@ -4,7 +4,7 @@ import torch
 
 
 class VLMVQAProcessor(ProcessorMixin):
-    def __init__(self, config: VLMConfig, token: str) -> None:
+    def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
         self.image_processor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
