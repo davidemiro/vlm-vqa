@@ -35,6 +35,18 @@ class VLMVQAProcessor(ProcessorMixin):
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'pixel_values': pixel_values}
 
+        def batch_decode(self, *args, **kwargs):
+            return self.tokenizer.batch_decode(*args, **kwargs)
+
+        def decode(self, *args, **kwargs):
+            return self.tokenizer.decode(*args, **kwargs)
+
+        @property
+        def model_input_names(self):
+            tokenizer_input_names = self.tokenizer.model_input_names
+            image_processor_input_names = self.image_processor.model_input_names
+            return list(dict.fromkeys(tokenizer_input_names + image_processor_input_names))
+
     def __call__(self, text, image, label=None, return_tensors="pt"):
         if label is None:
             return self._inference_processing(text, image, return_tensors=return_tensors)
