@@ -9,6 +9,7 @@ class VLMVQAProcessor(ProcessorMixin):
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
         self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
         self.context_length = config.context_length
+        self.chat_template = None
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
         text = "<bos>" + text + label
