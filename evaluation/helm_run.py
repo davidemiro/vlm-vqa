@@ -9,7 +9,7 @@ parser.add_argument("--token", type=str, default=None, help="The HuggingFace tok
 args = parser.parse_args()
 
 huggingface_cli = "huggingface-cli login --token {}".format(args.token)
-helm_run = "helm-run --conf-paths run_entries.conf --enable-huggingface-models davidemiro/vlm-vqa --suite v1 --max-eval-instances 1"
+helm_run = "helm-run --conf-paths run_entries.conf --enable-huggingface-models mirodavide/vlm-vqa --suite v1 --max-eval-instances 1"
 
 
 try:
