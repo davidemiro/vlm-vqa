@@ -25,6 +25,7 @@ dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(
 
 
 processor, vlm_model = get_vlm(config)
+processor.push_to_hub(config["output_dir"])
 
 target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "wte"]
 lora_config = LoraConfig(
@@ -72,7 +73,7 @@ trainer = Trainer(
 
 trainer.train()
 
-processor.push_to_hub(config["output_dir"])
+
 
 
 

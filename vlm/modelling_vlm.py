@@ -56,8 +56,6 @@ class VLMVQAForCausalLM(Gemma2ForCausalLM):
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
 
-        self.model.embed_tokens.requires_grad = False
-
 
     def forward(
         self,
