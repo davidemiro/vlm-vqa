@@ -52,6 +52,7 @@ training_args = TrainingArguments(
     fp16=True,
     fp16_full_eval=True,
     deepspeed="deepspeed/ds_config.json",
+    use_cache=False
 
 
 
