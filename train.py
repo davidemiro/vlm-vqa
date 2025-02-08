@@ -1,3 +1,6 @@
+import multiprocessing
+mp.set_start_method("spawn", force=True)
+
 from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
 from vlm.utils_vlm import BatchDataCollator, get_vlm
@@ -9,7 +12,7 @@ import torch
 from peft import LoraConfig, get_peft_model
 from evaluation.metrics import compute_accuracy
 
-import multiprocessing
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
