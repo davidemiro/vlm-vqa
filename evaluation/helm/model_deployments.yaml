@@ -1,7 +1,7 @@
 model_deployments:
-  - name: davidemiro/vlm-vqa
-    model_name: davidemiro/vlm-vqa
-    tokenizer_name: davidemiro/vlm-vqa
+  - name: mirodavide/vlm-vqa
+    model_name: mirodavide/vlm-vqa
+    tokenizer_name: mirodavide/vlm-vqa
     max_sequence_length: 32
     client_spec:
       class_name: "evaluation.helm.client.VLMVQAClient"
