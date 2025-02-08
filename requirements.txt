@@ -10,6 +10,5 @@ datasets==3.2.0
 accelerate==0.34.2
 peft==0.14.0
 evaluate==0.4.0
-deepspeed
 
 
