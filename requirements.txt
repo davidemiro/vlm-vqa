@@ -2,7 +2,7 @@ pandas==2.2.3
 ninja==1.11.1
 pillow==11.0.0
 torch==2.5.1
-torchvision==0.20.0
+torchvision==0.20.1
 huggingface_hub
 transformers==4.46.3
 datasets==3.2.0
