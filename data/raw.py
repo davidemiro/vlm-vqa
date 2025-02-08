@@ -2,7 +2,7 @@ import datasets
 import pandas
 from PIL import Image
 import os
-from vlm.processing_vlm import VLMVQAProcessor
+from vlm.processing_vlm import VLMProcessor
 
 from transformers import DefaultDataCollator
 
@@ -24,7 +24,7 @@ def get_dataset(annotations_path, questions_path):
 
 
 class RawDataCollator(DefaultDataCollator):
-    def __init__(self, processor: VLMVQAProcessor, img_path, split='train') -> None:
+    def __init__(self, processor: VLMProcessor, img_path, split='train') -> None:
         self.img_path = img_path
         self.split = split
         self.processor = processor

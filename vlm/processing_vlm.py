@@ -3,7 +3,7 @@ from vlm.configuration_vlm import VLMConfig
 import torch
 
 
-class VLMVQAProcessor(ProcessorMixin):
+class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)

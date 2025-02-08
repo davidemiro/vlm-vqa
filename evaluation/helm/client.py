@@ -17,8 +17,8 @@ from helm.common.request import wrap_request_time
 from helm.clients.client import CachingClient, generate_uid_for_multimodal_prompt
 from helm.tokenizers.tokenizer import Tokenizer
 
-from vlm.modelling_vlm import VLMVQAForConditionalGeneration, VLMVQAForCausalLM
-from vlm.processing_vlm import VLMVQAProcessor
+from vlm.modelling_vlm import VLMForConditionalGeneration, VLMVQAForCausalLM
+from vlm.processing_vlm import VLMProcessor
 
 try:
     from PIL import Image
@@ -34,12 +34,12 @@ torch.backends.cuda.enable_flash_sdp(False)
 class LoadedVLMForConditionalGeneration:
     """Loaded model and processor for PaliGemma."""
 
-    model: VLMVQAForConditionalGeneration
+    model: VLMForConditionalGeneration
     processor: AutoProcessor
 
 
 _models_lock: Lock = Lock()
-_models: Dict[str, Optional[VLMVQAForConditionalGeneration]] = {}
+_models: Dict[str, Optional[VLMForConditionalGeneration]] = {}
 
 
 class VLMVQAClient(CachingClient):
@@ -67,7 +67,7 @@ class VLMVQAClient(CachingClient):
                 model = VLMVQAForCausalLM.from_pretrained(
                     checkpoint, torch_dtype=torch.bfloat16, device_map="auto"
                 ).eval()
-                processor = VLMVQAProcessor.from_pretrained(checkpoint)
+                processor = VLMProcessor.from_pretrained(checkpoint)
                 _models[checkpoint] = LoadedVLMForConditionalGeneration(model, processor)
             loaded_model_processor = _models[checkpoint]
 
