@@ -39,7 +39,6 @@ training_args = TrainingArguments(
     learning_rate=float(config["learning_rate"]),
     weight_decay=float(config["weight_decay"]),
     per_device_train_batch_size=int(config["batch_size"]),
-    gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
     num_train_epochs=int(config["num_train_epochs"]),
     push_to_hub=True,
     remove_unused_columns=False,
