@@ -36,11 +36,6 @@ training_args = TrainingArguments(
     output_dir=config["output_dir"],
     evaluation_strategy="epoch",  # Evaluate at the end of each epoch
     save_strategy="epoch",
-    learning_rate=float(config["learning_rate"]),
-    weight_decay=float(config["weight_decay"]),
-    per_device_train_batch_size=int(config["batch_size"]),
-    gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-    num_train_epochs=int(config["num_train_epochs"]),
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
@@ -48,9 +43,6 @@ training_args = TrainingArguments(
     metric_for_best_model="accuracy",
     logging_steps=32,
     logging_dir="./logs",
-    gradient_checkpointing=True,
-    fp16=True,
-    fp16_full_eval=True,
     deepspeed="deepspeed/ds_config.json",
 
 
