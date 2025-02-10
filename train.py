@@ -10,9 +10,15 @@ from vlm.utils_vlm import BatchDataCollator, get_vlm
 
 def main():
 
+
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     config = configs.load_configs()["TRAIN"]
+
+    if config.local_rank != -1:
+        torch.cuda.set_device(config.local_rank)
+        print(config.local_rank)
 
     dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
     dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
