@@ -16,7 +16,7 @@ def load_configs():
     configs.read(args.configs)
 
     configs.set('TRAIN','token',args.token)
-    configs.set('TRAIN','local_rank',args.local_rank)
+    configs.set('TRAIN','local_rank', str(args.local_rank))
 
     return configs
 
