@@ -28,7 +28,13 @@ processor, vlm_model, vlm_config = get_vlm(config)
 processor.push_to_hub(config["output_dir"])
 vlm_config.push_to_hub(config["output_dir"])
 
-vlm_model.to(device)
+target_modules = ["q_proj", "k_proj", "v_proj", "out_proj", "fc_in", "fc_out", "wte"]
+lora_config = LoraConfig(
+    r=4, lora_alpha=16, target_modules=target_modules, lora_dropout=0.1, bias="none", task_type="CAUSAL_LM"
+)
+lora_model = get_peft_model(vlm_model, lora_config)
+
+lora_model.to(device)
 
 data_collator_batch = BatchDataCollator(processor)
 
@@ -40,6 +46,7 @@ training_args = TrainingArguments(
     weight_decay=float(config["weight_decay"]),
     per_device_train_batch_size=int(config["batch_size"]),
     num_train_epochs=int(config["num_train_epochs"]),
+    optim=config["optim"],
     push_to_hub=True,
     remove_unused_columns=False,
     dataloader_pin_memory=False,
@@ -57,7 +64,7 @@ training_args = TrainingArguments(
 )
 
 trainer = Trainer(
-    model=vlm_model,
+    model=lora_model,
     args=training_args,
     train_dataset=dataset_train,
     eval_dataset=dataset_val,
