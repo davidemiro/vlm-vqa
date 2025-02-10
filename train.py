@@ -16,9 +16,9 @@ def main():
 
     config = configs.load_configs()["TRAIN"]
 
-    if int(config.local_rank) != -1:
-        torch.cuda.set_device(int(config.local_rank))
-        print(config.local_rank)
+    if int(config["local_rank"]) != -1:
+        torch.cuda.set_device(int(config["local_rank"]))
+        print(config["local_rank"])
 
     dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
     dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
