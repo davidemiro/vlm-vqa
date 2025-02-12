@@ -2,7 +2,6 @@ from transformers import Trainer, TrainingArguments
 from configs import configs
 from data.raw import get_dataset
 import torch
-from peft import LoraConfig, get_peft_model
 from evaluation.metrics import compute_accuracy
 
 from vlm.utils_vlm import BatchDataCollator, get_vlm
