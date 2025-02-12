@@ -6,5 +6,3 @@ model_deployments:
     model_max_length: 321
     client_spec:
       class_name: "evaluation.helm.client.VLMClient"
-      args:
-        pretrained_model_name_or_path: mirodavide/vlm-vqa

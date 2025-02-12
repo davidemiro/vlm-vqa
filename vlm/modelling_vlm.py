@@ -75,7 +75,8 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         num_logits_to_keep: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
-        visual_embeds = self.vit(pixel_values)
+        with torch.no_grad():
+            visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
         input_ids = input_ids[:, self.num_patches:]
