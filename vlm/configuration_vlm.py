@@ -13,4 +13,3 @@ class VLMConfig(Gemma2Config):
         self.old_num_patches = 257
         self.num_patches = num_patches
         self.context_length = self.text_length + self.num_patches
-        self.use_cache = False

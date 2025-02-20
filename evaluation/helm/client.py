@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import torch
 from dataclasses import dataclass
-from transformers import AutoProcessor
+from transformers import AutoProcessor, AutoConfig
 
 from helm.common.cache import CacheConfig
 from helm.common.images_utils import open_image
@@ -17,7 +17,7 @@ from helm.common.request import wrap_request_time
 from helm.clients.client import CachingClient, generate_uid_for_multimodal_prompt
 from helm.tokenizers.tokenizer import Tokenizer
 
-from vlm.modelling_vlm import VLMForConditionalGeneration, VLMVQAForCausalLM
+from vlm.modelling_vlm import VLMForConditionalGeneration, VLMForCausalLM
 from vlm.processing_vlm import VLMProcessor
 
 try:
@@ -64,10 +64,11 @@ class VLMClient(CachingClient):
         with _models_lock:
             if checkpoint not in _models or _models[checkpoint] is None:
                 hlog(f"Loading model {checkpoint} and caching in memory...")
-                model = VLMVQAForCausalLM.from_pretrained(
-                    checkpoint, torch_dtype=torch.bfloat16, device_map="auto"
+                config = AutoConfig.from_pretrained(checkpoint)
+                model = VLMForConditionalGeneration.from_pretrained(
+                    checkpoint, config=config, torch_dtype=torch.bfloat16, device_map="auto"
                 ).eval()
-                processor = VLMProcessor.from_pretrained(checkpoint)
+                processor = AutoProcessor.from_pretrained(checkpoint)
                 _models[checkpoint] = LoadedVLMForConditionalGeneration(model, processor)
             loaded_model_processor = _models[checkpoint]
 
