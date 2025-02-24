@@ -4,6 +4,6 @@ models:
     description: vlm-vqa (3B parameters). VLMVQA is a lightweight vision-language model inspired by PaliGemma and based on open components such as DinoV2 and Gemma2 language model.
     creator_organization_name: mirodavide
     access: open
-    num_parameters: 3B
+    num_parameters: 3000000000
     release_date: 2025-01-05
     tags: [TEXT_MODEL_TAG, PARTIAL_FUNCTIONALITY_TEXT_MODEL_TAG]
