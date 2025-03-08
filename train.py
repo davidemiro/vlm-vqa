@@ -29,9 +29,9 @@ def main():
     vlm_config.push_to_hub(config["output_dir"])
 
     lora_config = LoraConfig(
-        r=config['lora_rank'],
-        lora_alpha=config['lora_alpha'],
-        lora_dropout=config['lora_dropout'],
+        r=int(config['lora_rank']),
+        lora_alpha=int(config['lora_alpha']),
+        lora_dropout=float(config['lora_dropout']),
         bias=config['lora_bias'],
         task_type="CAUSAL_LM"
     )
