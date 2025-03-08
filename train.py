@@ -62,7 +62,7 @@ def main():
         fp16=True,
         fp16_full_eval=True,
         deepspeed="deepspeed/ds_config.json",
-        dataloader_num_workers=8,
+        dataloader_num_workers=4,
 
 
 
