@@ -9,7 +9,6 @@ import multiprocessing
 
 
 def main():
-    multiprocessing.set_start_method('spawn', force=True)
 
     config = configs.load_configs()["TRAIN"]
 
@@ -62,7 +61,6 @@ def main():
         fp16=True,
         fp16_full_eval=True,
         deepspeed="deepspeed/ds_config.json",
-        dataloader_num_workers=4,
 
 
 
