@@ -1,22 +1,16 @@
 {
     "zero_optimization": {
-        "stage": 3,
+        "stage": 2,
         "offload_optimizer": {
             "device": "none",
             "pin_memory": false
         },
-        "offload_param": {
-            "device": "none",
-            "pin_memory": false
-        },
+        "allgather_partitions": true,
+        "allgather_bucket_size": 5e9,
         "overlap_comm": true,
-        "contiguous_gradients": true,
-        "sub_group_size": 7e9,
-        "reduce_bucket_size": "auto",
-        "stage3_prefetch_bucket_size": "auto",
-        "stage3_param_persistence_threshold": "auto",
-        "stage3_max_live_parameters": 7e9,
-        "stage3_max_reuse_distance": 7e9
+        "reduce_scatter": true,
+        "reduce_bucket_size": 5e9,
+        "contiguous_gradients": true
     },
 
     "gradient_accumulation_steps": "auto",
