@@ -16,21 +16,14 @@ class VLMProcessor(ProcessorMixin):
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors)
 
-        print(text_tokenized['input_ids'].requires_grad)
-        print(text_tokenized['attention_mask'].requires_grad)
-
         label_tokenized = self.tokenizer(label, truncation=True, padding="max_length", max_length=self.context_length,
                                          return_tensors=return_tensors)['input_ids']
 
-
         label_tokenized[label_tokenized == 0] = -100
-
-        print(label_tokenized.requires_grad)
 
         pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
                                     requires_grad=False, dtype=torch.float16)
 
-        print(pixel_values.requires_grad)
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'labels': label_tokenized, 'pixel_values': pixel_values}
 
