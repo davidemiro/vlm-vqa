@@ -9,7 +9,9 @@ class VLMConfig(Gemma2Config):
         self.pad_token_id = 0
         self.image_token_id = 256000
         self.vit_config = AutoConfig.from_pretrained("facebook/dinov2-base")
+        self.vit_config.use_cache = False
         self.text_length = text_length
         self.old_num_patches = 257
         self.num_patches = num_patches
         self.context_length = self.text_length + self.num_patches
+        self.use_cache = False
