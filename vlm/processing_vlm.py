@@ -22,7 +22,7 @@ class VLMProcessor(ProcessorMixin):
         label_tokenized[label_tokenized == 0] = -100
 
         pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
-                                    requires_grad=False, dtype=torch.float16)
+                                    requires_grad=True, dtype=torch.float16)
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'labels': label_tokenized, 'pixel_values': pixel_values}
@@ -33,7 +33,7 @@ class VLMProcessor(ProcessorMixin):
                                         return_tensors=return_tensors)
 
         pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
-                                    requires_grad=False, dtype=torch.float16)
+                                    requires_grad=True, dtype=torch.float16)
 
         return {'input_ids': text_tokenized['input_ids'], 'attention_mask': text_tokenized['attention_mask'],
                 'pixel_values': pixel_values}
