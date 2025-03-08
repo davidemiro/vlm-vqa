@@ -68,7 +68,7 @@ def main():
     )
 
     trainer = Trainer(
-        model=vlm_model,
+        model=lora_model,
         args=training_args,
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
