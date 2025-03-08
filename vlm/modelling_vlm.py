@@ -11,7 +11,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
         self.vit = AutoModel.from_pretrained("facebook/dinov2-base")
-        self.vit.requires_grad = False
         self.num_patches = config.num_patches
 
         self.image_token_id = self.config.image_token_id
