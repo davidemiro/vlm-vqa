@@ -52,7 +52,7 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
-        push_to_hub=True,
+        push_to_hub=False,
         remove_unused_columns=False,
         dataloader_pin_memory=False,
         load_best_model_at_end=True,
