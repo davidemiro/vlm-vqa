@@ -35,9 +35,7 @@ class BatchDataCollator(DefaultDataCollator):
 
     def _load_image(self, path, split, image_id):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
-        #img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
-        #TODO: remove
-        img = Image.open("COCO_val2014_000000581929.jpg")
+        img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
         return img
 
 
