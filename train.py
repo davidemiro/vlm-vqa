@@ -38,6 +38,8 @@ def main():
     )
     lora_model = get_peft_model(vlm_model, lora_config)
 
+    lora_model.print_trainable_parameters()
+
 
 
     data_collator_batch = BatchDataCollator(processor)
