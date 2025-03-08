@@ -32,11 +32,10 @@ class BatchDataCollator(DefaultDataCollator):
 
         return {'input_ids': torch.cat(input_ids, 0).to(self.device), 'attention_mask': torch.cat(attention_masks, 0).to(self.device), 'labels': torch.cat(labels, 0).to(self.device), 'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.bfloat16).to(self.device)}
 
+
     def _load_image(self, path, split, image_id):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
-        #img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
-        #TODO: remove
-        img = Image.open("COCO_val2014_000000581929.jpg")
+        img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
         return img
 
 
