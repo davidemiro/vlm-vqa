@@ -38,6 +38,8 @@ def main():
     )
     lora_model = get_peft_model(vlm_model, lora_config)
 
+
+
     data_collator_batch = BatchDataCollator(processor)
 
     training_args = TrainingArguments(
@@ -57,7 +59,7 @@ def main():
         metric_for_best_model="accuracy",
         logging_steps=2000,
         logging_dir="./logs",
-        gradient_checkpointing=True,
+        gradient_checkpointing=False,
         fp16=True,
         fp16_full_eval=True,
         deepspeed="deepspeed/ds_config.json",
