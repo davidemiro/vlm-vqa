@@ -60,7 +60,7 @@ def main():
         metric_for_best_model="accuracy",
         logging_steps=2000,
         logging_dir="./logs",
-        gradient_checkpointing=False,
+        gradient_checkpointing=True,
         bf16=True,
         bf16_full_eval=True,
         deepspeed="deepspeed/ds_config.json",
