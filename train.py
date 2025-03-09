@@ -62,7 +62,8 @@ def main():
         logging_dir="./logs",
         gradient_checkpointing=True,
         bf16=True,
-        bf16_full_eval=True
+        bf16_full_eval=True,
+        ddp_find_unused_parameters = False
 
 
 
