@@ -58,7 +58,7 @@ def main():
         dataloader_pin_memory=False,
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
-        logging_steps=2000,
+        logging_steps=10,
         logging_dir="./logs",
         gradient_checkpointing=True,
         bf16=True,
