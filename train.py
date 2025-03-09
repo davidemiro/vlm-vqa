@@ -29,16 +29,18 @@ def main():
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
 
-    lora_config = LoraConfig(
-        r=int(config['lora_rank']),
-        lora_alpha=int(config['lora_alpha']),
-        lora_dropout=float(config['lora_dropout']),
-        bias=config['lora_bias'],
-        task_type="CAUSAL_LM"
-    )
-    lora_model = get_peft_model(vlm_model, lora_config)
+    if bool(config["lora"]) == 0:
+        lora_config = LoraConfig(
+            r=int(config['lora_rank']),
+            lora_alpha=int(config['lora_alpha']),
+            lora_dropout=float(config['lora_dropout']),
+            bias=config['lora_bias'],
+            task_type="CAUSAL_LM"
+        )
+        lora_model = get_peft_model(vlm_model, lora_config)
 
-    lora_model.print_trainable_parameters()
+        lora_model.print_trainable_parameters()
+        vlm_model = lora_model
 
     data_collator_batch = BatchDataCollator(processor)
 
@@ -68,7 +70,7 @@ def main():
     )
 
     trainer = Trainer(
-        model=lora_model,
+        model=vlm_model,
         args=training_args,
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
