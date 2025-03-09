@@ -29,7 +29,7 @@ def main():
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
 
-    if bool(config["lora"]) == 0:
+    if bool(config["lora"]):
         lora_config = LoraConfig(
             r=int(config['lora_rank']),
             lora_alpha=int(config['lora_alpha']),
