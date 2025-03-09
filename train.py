@@ -63,7 +63,7 @@ def main():
         gradient_checkpointing=True,
         bf16=True,
         bf16_full_eval=True,
-        ddp_find_unused_parameters=bool(config["ddp_find_unused_parameters"])
+        ddp_find_unused_parameters=False
 
     )
 
