@@ -25,6 +25,8 @@ def compute_accuracy(p, compute_result=False):
     else:
 
         predictions, labels = p
+        predictions = predictions.cpu().numpy()
+        labels = labels.cpu().numpy()
         preds = predictions.argmax(axis=-1)
         batch_accuracy = accuracy.compute(references=labels, predictions=preds)
         with open("store_values", 'a') as file:
