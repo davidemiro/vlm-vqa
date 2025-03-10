@@ -52,7 +52,6 @@ def main():
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
         per_device_eval_batch_size=1,
-        gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
         push_to_hub=True,
@@ -66,7 +65,7 @@ def main():
         bf16=True,
         bf16_full_eval=True,
         ddp_find_unused_parameters=False,
-        eval_accumulation_steps=1
+        eval_accumulation_steps=10
 
     )
 
