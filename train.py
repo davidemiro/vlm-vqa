@@ -66,7 +66,8 @@ def main():
         bf16=True,
         bf16_full_eval=True,
         ddp_find_unused_parameters=False,
-        eval_accumulation_steps=1
+        eval_accumulation_steps=1,
+        batch_eval_metrics=True
 
     )
 
