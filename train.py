@@ -46,7 +46,7 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        evaluation_strategy="epoch",  # Evaluate at the end of each epoch
+        eval_strategy="epoch",  # Evaluate at the end of each epoch
         save_strategy="epoch",
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
