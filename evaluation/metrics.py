@@ -1,6 +1,6 @@
 import evaluate
 
-clf_metrics = evaluate.load("accuracy")
+accuracy = evaluate.load("accuracy")
 
 
 def compute_accuracy(p, compute_result=False):
@@ -26,7 +26,7 @@ def compute_accuracy(p, compute_result=False):
 
         predictions, labels = p
         preds = predictions.argmax(axis=-1)
-        batch_accuracy = clf_metrics(labels, preds)
+        batch_accuracy = accuracy.compute(labels, preds)
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
