@@ -51,6 +51,7 @@ def main():
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
+        per_device_eval_batch_size=1,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
