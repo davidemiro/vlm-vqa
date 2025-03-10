@@ -51,7 +51,7 @@ def main():
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
-        per_device_eval_batch_size=1,
+        per_device_eval_batch_size=int(config["batch_size"]),
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
         push_to_hub=True,
@@ -59,12 +59,13 @@ def main():
         dataloader_pin_memory=False,
         load_best_model_at_end=True,
         metric_for_best_model="accuracy",
-        logging_steps=10,
+        logging_steps=16,
         logging_dir="./logs",
         gradient_checkpointing=True,
         bf16=True,
         bf16_full_eval=True,
-        ddp_find_unused_parameters=False
+        ddp_find_unused_parameters=False,
+        eval_accumulation_steps=10
 
     )
 
