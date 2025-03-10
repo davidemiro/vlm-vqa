@@ -26,7 +26,7 @@ def compute_accuracy(p, compute_result=False):
 
         predictions, labels = p
         preds = predictions.argmax(axis=-1)
-        batch_accuracy = accuracy.compute(labels, preds)
+        batch_accuracy = accuracy.compute(references=labels, predictions=preds)
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
