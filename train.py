@@ -49,6 +49,7 @@ def main():
         eval_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
         eval_steps=8,
+        save_steps=8,
         torch_empty_cache_steps=8,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
