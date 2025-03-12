@@ -1,4 +1,5 @@
 import evaluate
+import torch
 
 accuracy = evaluate.load("accuracy")
 
@@ -11,9 +12,11 @@ def compute_accuracy(p, compute_result=False):
         with open("store_values", 'r') as file:
             for line in file:
                 try:
+                    
                     value = float(line.strip())
                     total_sum += value
                     count += 1
+                    
                 except ValueError:
                     continue
             if count == 0:
@@ -23,12 +26,19 @@ def compute_accuracy(p, compute_result=False):
         return mean
 
     else:
+        
 
         predictions, labels = p
         predictions = predictions.cpu().numpy()
-        labels = labels.cpu().numpy()
+        labels = labels.cpu().numpy().flatten()
         preds = predictions.argmax(axis=-1)
-        batch_accuracy = accuracy.compute(references=labels, predictions=preds)
+        preds = preds.flatten()
+
+        print(labels.shape)
+        print(preds.shape)
+        print(labels)
+        print(preds)
+        batch_accuracy = accuracy.compute(references=labels, predictions=preds)["accuracy"]
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
