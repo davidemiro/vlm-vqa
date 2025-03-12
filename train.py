@@ -46,14 +46,14 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        eval_strategy="steps",  # Evaluate at the end of each epoch
-        save_strategy="steps",
+        eval_strategy="epoch",  # Evaluate at the end of each epoch
+        save_strategy="epoch",
         eval_steps=2,
         torch_empty_cache_steps=2,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
-        per_device_eval_batch_size=4,
+        per_device_eval_batch_size=8,
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
         push_to_hub=True,
@@ -68,6 +68,7 @@ def main():
         bf16_full_eval=True,
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=1,
+        gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True
 
     )
