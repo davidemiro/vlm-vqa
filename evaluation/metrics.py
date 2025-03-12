@@ -23,7 +23,7 @@ def compute_accuracy(p, compute_result=False):
                 return 0
 
             mean = total_sum / count
-        return mean
+        return {"accuracy" : mean}
 
     else:
         
@@ -42,4 +42,4 @@ def compute_accuracy(p, compute_result=False):
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
-    return batch_accuracy
+    return {"accuracy" : batch_accuracy}
