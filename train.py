@@ -67,7 +67,7 @@ def main():
         bf16=True,
         bf16_full_eval=True,
         ddp_find_unused_parameters=False,
-        eval_accumulation_steps=8,
+        eval_accumulation_steps=16,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True
 
