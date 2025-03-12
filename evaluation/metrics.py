@@ -1,10 +1,12 @@
 import evaluate
 import torch
+import time
 
 accuracy = evaluate.load("accuracy")
 
 
 def compute_accuracy(p, compute_result=False):
+    t = time.time()
     if compute_result:
         total_sum = 0
         count = 0
@@ -37,5 +39,7 @@ def compute_accuracy(p, compute_result=False):
         batch_accuracy = accuracy.compute(references=labels, predictions=preds)["accuracy"]
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
+
+        print("Time {}".format(time.time() - t))
 
     return {"accuracy": batch_accuracy}
