@@ -50,7 +50,6 @@ def main():
         save_strategy="steps",
         eval_steps=8,
         save_steps=8,
-        torch_empty_cache_steps=8,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
