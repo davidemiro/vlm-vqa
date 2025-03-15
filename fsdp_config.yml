@@ -4,10 +4,8 @@ distributed_type: FSDP
 downcast_bf16: 'no'
 dynamo_config:
   dynamo_backend: CUDAGRAPHS
-  dynamo_mode: max-autotune
   dynamo_use_dynamic: false
   dynamo_use_fullgraph: false
-  dynamo_use_reentrant: false
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: false
@@ -20,7 +18,7 @@ fsdp_config:
   fsdp_state_dict_type: SHARDED_STATE_DICT
   fsdp_sync_module_states: true
   fsdp_use_orig_params: true
-machine_rank: 4
+machine_rank: 0
 main_training_function: main
 mixed_precision: fp16
 num_machines: 1
