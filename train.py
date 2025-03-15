@@ -74,6 +74,7 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
+        deepspeed=None if config["deepspeed"] is None else config["deepspeed"],
 
     )
 
