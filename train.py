@@ -74,7 +74,7 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-        deepspeed="deepspeed/ds_config.json",
+        deepspeed=None if config["deepspeed"] is None else config["deepspeed"],
 
     )
 
@@ -86,7 +86,7 @@ def main():
         data_collator=data_collator_batch,
     )
 
-    print("PARALLEL_MODE {}".format(trainer.args.parallel_mode))
+    print(trainer.args)
 
     trainer.train()
 
