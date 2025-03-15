@@ -72,6 +72,7 @@ def main():
         fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
+        ddp_backed="mpi",
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         dataloader_num_workers=8,
