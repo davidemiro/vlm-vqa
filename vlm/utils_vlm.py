@@ -30,7 +30,12 @@ class BatchDataCollator(DefaultDataCollator):
             labels.append(row_dict['labels'])
             pixel_values.append(row_dict['pixel_values'])
 
-        return {'input_ids': torch.cat(input_ids, 0), 'attention_mask': torch.cat(attention_masks, 0), 'labels': torch.cat(labels, 0), 'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16)}
+        return {
+            'input_ids': torch.cat(input_ids, 0).detach(),
+            'attention_mask': torch.cat(attention_masks, 0).detach(),
+            'labels': torch.cat(labels, 0).detach(),
+            'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16).detach()
+        }
 
 
     def _load_image(self, path, split, image_id):
