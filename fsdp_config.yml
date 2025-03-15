@@ -7,6 +7,7 @@ dynamo_config:
   dynamo_mode: max-autotune
   dynamo_use_dynamic: false
   dynamo_use_fullgraph: false
+  dynamo_use_reentrant: false
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: true
