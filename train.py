@@ -72,6 +72,8 @@ def main():
         fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
+        gradient_checkpointing=True,
+        gradient_checkpointing_kwargs={'use_reentrant': False},
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
 
