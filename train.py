@@ -19,8 +19,8 @@ def main():
 
     if bool(config["load_dataset"]):
 
-        dataset_train = datasets.load_dataset(config['local_train_path'])
-        dataset_val = datasets.load_dataset(config['local_val_path'])
+        dataset_train = datasets.load_from_disk(config['local_train_path'])
+        dataset_val = datasets.load_from_disk(config['local_val_path'])
     else:
 
         dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
