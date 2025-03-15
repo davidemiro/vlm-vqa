@@ -24,10 +24,10 @@ class VLMProcessor(ProcessorMixin):
         pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
                                     requires_grad=True, dtype=torch.float16)
 
-        return {'input_ids': text_tokenized['input_ids'],
-                'attention_mask': text_tokenized['attention_mask'],
-                'labels': label_tokenized,
-                'pixel_values': pixel_values}
+        return {'input_ids': text_tokenized['input_ids'].detach(),
+                'attention_mask': text_tokenized['attention_mask'].detach(),
+                'labels': label_tokenized.detach(),
+                'pixel_values': pixel_values.detach()}
 
     def _inference_processing(self, text, image, return_tensors="np"):
         text = "<bos>" + text
@@ -37,9 +37,9 @@ class VLMProcessor(ProcessorMixin):
         pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
                                     requires_grad=True, dtype=torch.float16)
 
-        return {'input_ids': text_tokenized['input_ids'],
-                'attention_mask': text_tokenized['attention_mask'],
-                'pixel_values': pixel_values}
+        return {'input_ids': text_tokenized['input_ids'].detach(),
+                'attention_mask': text_tokenized['attention_mask'].detach(),
+                'pixel_values': pixel_values.detach()}
 
         def batch_decode(self, *args, **kwargs):
             return self.tokenizer.batch_decode(*args, **kwargs)
