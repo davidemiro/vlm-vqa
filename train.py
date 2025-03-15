@@ -86,6 +86,8 @@ def main():
         data_collator=data_collator_batch,
     )
 
+    print("PARALLEL_MODE {}".format(trainer.args.parallel_mode))
+
     trainer.train()
 
 
