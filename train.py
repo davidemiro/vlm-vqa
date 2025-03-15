@@ -25,6 +25,9 @@ def main():
     dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] * len(dataset_train))
     dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
 
+    dataset_train.save_to_disk(config['local_train_path'])
+    dataset_val.save_to_disk(config['local_val_path'])
+
     processor, vlm_model, vlm_config = get_vlm(config)
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
