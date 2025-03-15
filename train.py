@@ -11,7 +11,7 @@ import multiprocessing
 
 def main():
     torch._dynamo.config.suppress_errors = True
-    torch._dynamo.config.default_dtype = torch.float16
+    torch.set_default_dtype(torch.float16)
 
     config = configs.load_configs()["TRAIN"]
 
