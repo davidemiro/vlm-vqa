@@ -78,7 +78,7 @@ def main():
         fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
-        eval_accumulation_steps=100,
+        eval_accumulation_steps=2,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True
 
