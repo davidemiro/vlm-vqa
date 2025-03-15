@@ -20,7 +20,7 @@ fsdp_config:
   fsdp_state_dict_type: SHARDED_STATE_DICT
   fsdp_sync_module_states: true
   fsdp_use_orig_params: true
-machine_rank: 0
+machine_rank: 4
 main_training_function: main
 mixed_precision: fp16
 num_machines: 1
