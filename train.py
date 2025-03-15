@@ -58,6 +58,10 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
+        evaluation_strategy="steps",  # Evaluate at the end of each epoch
+        save_strategy="steps",
+        eval_steps=16,
+        save_steps=16,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
@@ -68,12 +72,15 @@ def main():
         dataloader_pin_memory=True,
         load_best_model_at_end=False,
         logging_steps=8,
+        metric_for_best_model="accuracy",
         logging_dir="./logs",
         fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
+        dataloader_num_workers=8,
+        batch_eval_metrics=True
 
     )
 
@@ -83,6 +90,7 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
+        compute_metrics=compute_accuracy,
     )
 
     trainer.train()
