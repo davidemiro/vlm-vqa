@@ -46,10 +46,6 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        eval_strategy="steps",  # Evaluate at the end of each epoch
-        save_strategy="steps",
-        eval_steps=2,
-        save_steps=2,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
@@ -69,7 +65,6 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=100,
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-        batch_eval_metrics=True
 
     )
 
