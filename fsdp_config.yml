@@ -2,6 +2,11 @@ compute_environment: LOCAL_MACHINE
 debug: false
 distributed_type: FSDP
 downcast_bf16: 'no'
+dynamo_config:
+  dynamo_backend: CUDAGRAPHS
+  dynamo_mode: max-autotune
+  dynamo_use_dynamic: false
+  dynamo_use_fullgraph: false
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: true

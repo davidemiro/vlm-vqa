@@ -10,6 +10,7 @@ import multiprocessing
 
 
 def main():
+    torch._dynamo.config.suppress_errors = True
 
     config = configs.load_configs()["TRAIN"]
 
