@@ -1,5 +1,6 @@
 from peft import LoraConfig, get_peft_model
 from transformers import Trainer, TrainingArguments
+import datasets
 from configs import configs
 from data.raw import get_dataset
 import torch
@@ -16,17 +17,23 @@ def main():
         torch.cuda.set_device(int(config["local_rank"]))
         print(config["local_rank"])
 
-    dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
-    dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
+    if bool(config["load_dataset"]):
 
-    dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
-    dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))
+        dataset_train = datasets.load_dataset(config['local_train_path'])
+        dataset_val = datasets.load_dataset(config['local_val_path'])
+    else:
 
-    dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] * len(dataset_train))
-    dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
+        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
+        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
 
-    dataset_train.save_to_disk(config['local_train_path'])
-    dataset_val.save_to_disk(config['local_val_path'])
+        dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
+        dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))
+
+        dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] * len(dataset_train))
+        dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
+
+        dataset_train.save_to_disk(config['local_train_path'])
+        dataset_val.save_to_disk(config['local_val_path'])
 
     processor, vlm_model, vlm_config = get_vlm(config)
     processor.push_to_hub(config["output_dir"])
@@ -60,7 +67,6 @@ def main():
         load_best_model_at_end=False,
         logging_steps=8,
         logging_dir="./logs",
-        gradient_checkpointing=True,
         fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
