@@ -49,14 +49,12 @@ def main():
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
-        per_device_eval_batch_size=8,
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
         push_to_hub=True,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
-        load_best_model_at_end=True,
-        metric_for_best_model="accuracy",
+        load_best_model_at_end=False,
         logging_steps=8,
         logging_dir="./logs",
         gradient_checkpointing=True,
@@ -74,7 +72,6 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
-        compute_metrics=compute_accuracy,
     )
 
     trainer.train()
