@@ -10,7 +10,7 @@ dynamo_config:
   dynamo_use_reentrant: false
 enable_cpu_affinity: false
 fsdp_config:
-  fsdp_activation_checkpointing: true
+  fsdp_activation_checkpointing: false
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
   fsdp_backward_prefetch: BACKWARD_PRE
   fsdp_cpu_ram_efficient_loading: true
