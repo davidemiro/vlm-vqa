@@ -85,10 +85,6 @@ def main():
         data_collator=data_collator_batch,
     )
 
-    trainer_vars = vars(trainer)
-    for key, value in trainer_vars.items():
-        print(f"{key}: {value}")
-
     trainer.train()
 
 
