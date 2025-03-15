@@ -40,6 +40,4 @@ def compute_accuracy(p, compute_result=False):
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
-        print("Time {}".format(time.time() - t))
-
     return {"accuracy": batch_accuracy}
