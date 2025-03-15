@@ -21,7 +21,7 @@ def get_dataset(annotations_path, questions_path):
     dataset = pandas.merge(questions, annotations, on="question_id")
     dataset = datasets.Dataset.from_pandas(dataset)
 
-    return dataset.select(128)
+    return dataset.select(range(int(0.25 * len(dataset))))
 
 
 class RawDataCollator(DefaultDataCollator):
