@@ -48,9 +48,9 @@ def get_vlm(config):
 
     vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
     processor = VLMProcessor(vlm_config, config['token'])
-    vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, attn_implementation=config["attention"], torch_dtype=torch.float16,
+    vlm_model = VLMForCausalLM.from_pretrained("google/gemma-2-2b-it", config=vlm_config, attn_implementation=config["attention"], torch_dtype=torch.bfloat16,
                                                   token=config['token'])
-    vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.float16)
+    vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.bfloat16)
 
     return processor, vlm_model, vlm_config
 

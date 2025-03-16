@@ -1,12 +1,9 @@
 import evaluate
-import torch
-import time
-
-accuracy = evaluate.load("accuracy")
+import os
+f1_score = evaluate.load("f1")
 
 
-def compute_accuracy(p, compute_result=False):
-    t = time.time()
+def compute_f1_score(p, compute_result=False):
     if compute_result:
         total_sum = 0
         count = 0
@@ -24,20 +21,20 @@ def compute_accuracy(p, compute_result=False):
             if count == 0:
                 return 0
 
+            os.remove("store_values")
+
             mean = total_sum / count
-        return {"accuracy" : mean}
+        return {"f1_score" : mean}
 
     else:
-        
 
         predictions, labels = p
-        predictions = predictions.cpu().numpy()
-        labels = labels.cpu().numpy().flatten()
-        preds = predictions.argmax(axis=-1)
-        preds = preds.flatten()
+        predictions = predictions
+        labels = labels.flatten()
+        predictions = predictions.argmax(axis=-1).flatten()
 
-        batch_accuracy = accuracy.compute(references=labels, predictions=preds)["accuracy"]
+        batch_accuracy = f1_score.compute(references=labels, predictions=predictions)["f1"]
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
-    return {"accuracy": batch_accuracy}
+    return {"f1_score": batch_accuracy}

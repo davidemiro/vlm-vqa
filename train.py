@@ -4,9 +4,8 @@ import datasets
 from configs import configs
 from data.raw import get_dataset
 import torch
-from evaluation.metrics import compute_accuracy
+from evaluation.metrics import compute_f1_score
 from vlm.utils_vlm import BatchDataCollator, get_vlm
-import multiprocessing
 
 
 def main():
@@ -60,9 +59,9 @@ def main():
         output_dir=config["output_dir"],
         evaluation_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
-        eval_steps=16,
-        save_steps=16,
-        torch_empty_cache_steps=16,
+        eval_steps=len(dataset_train) // config["batch_size"],
+        save_steps=len(dataset_train) // config["batch_size"],
+        torch_empty_cache_steps=len(dataset_train) // config["batch_size"],
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
@@ -76,14 +75,16 @@ def main():
         dataloader_pin_memory=True,
         load_best_model_at_end=False,
         logging_steps=8,
-        metric_for_best_model="accuracy",
+        metric_for_best_model="f1_score",
         logging_dir="./logs",
-        fp16=True,
-        fp16_full_eval=True,
+        save_total_limit=1,
+        bf16=True,
+        bf16_full_eval=True,
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-        batch_eval_metrics=True
+        batch_eval_metrics=True,
+        dataloader_num_workers=32
 
     )
 
@@ -93,7 +94,7 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
-        compute_metrics=compute_accuracy,
+        compute_metrics=compute_f1_score,
     )
 
     trainer.train()
