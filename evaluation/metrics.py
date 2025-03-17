@@ -33,7 +33,7 @@ def compute_f1_score(p, compute_result=False):
         labels = labels.flatten()
         predictions = predictions.argmax(axis=-1).flatten()
 
-        batch_accuracy = accuracy.compute(references=labels, predictions=predictions, average="macro")["f1"]
+        batch_accuracy = accuracy.compute(references=labels, predictions=predictions)["accuracy"]
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
