@@ -74,12 +74,10 @@ def main():
         optim=config["optim"],
         push_to_hub=True,
         save_only_model=True,
-        greater_is_better=True,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
         load_best_model_at_end=False,
         logging_steps=8,
-        metric_for_best_model="eval_accuracy",
         logging_dir="./logs",
         save_total_limit=1,
         fp16=True,
@@ -87,7 +85,6 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-        batch_eval_metrics=True
 
     )
 
@@ -97,7 +94,6 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
-        compute_metrics=compute_accuracy_closure(lock,4),
     )
 
     trainer.train()
