@@ -56,3 +56,5 @@ def compute_accuracy_closure(input_lock, input_num_gpu):
                 file.write(f"{batch_accuracy}\n")
 
             return {"eval_accuracy": batch_accuracy}
+
+    return compute_accuracy
