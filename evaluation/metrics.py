@@ -1,47 +1,58 @@
 import evaluate
 import os
 import torch
+import threading
 accuracy = evaluate.load("accuracy")
 
 
-def compute_accuracy(p, compute_result=False):
-    gpu_rank = torch.cuda.current_device()
+def compute_accuracy_closure(input_lock, input_num_gpu):
+    lock = input_lock
+    num_gpu = input_num_gpu
 
-    print("Computing accuracy... {}".format(compute_result))
-    if compute_result:
-        total_sum = 0
-        count = 0
+    def compute_accuracy(p, compute_result=False):
 
-        with open("store_values_{}".format(gpu_rank), 'r') as file:
-            for line in file:
-                try:
-                    
-                    value = float(line.strip())
-                    total_sum += value
-                    count += 1
-                    
-                except ValueError:
-                    continue
-            if count == 0:
-                return 0
+        nonlocal num_gpu
+        nonlocal lock
 
-            os.remove("store_values_{}".format(gpu_rank))
+        print("Computing accuracy... {}".format(compute_result))
+        if compute_result:
+            total_sum = 0
+            count = 0
+            mean = 0
 
+            with lock:
 
-            mean = total_sum / count
+                for gpu_rank in range(num_gpu):
 
-            print("Mean {}: {}".format(gpu_rank, mean))
-        return {"accuracy" : mean}
+                    with open("store_values_{}".format(gpu_rank), 'r') as file:
+                        for line in file:
+                            try:
 
-    else:
+                                value = float(line.strip())
+                                total_sum += value
+                                count += 1
 
-        predictions, labels = p
-        predictions = predictions
-        labels = labels.flatten()
-        predictions = predictions.argmax(axis=-1).flatten()
+                            except ValueError:
+                                continue
+                        if count == 0:
+                            return 0
 
-        batch_accuracy = accuracy.compute(references=labels, predictions=predictions)["accuracy"]
-        with open("store_values", 'a') as file:
-            file.write(f"{batch_accuracy}\n")
+                        os.remove("store_values_{}".format(gpu_rank))
+                        mean = total_sum / count
 
-    return {"accuracy": batch_accuracy}
+                    print("Mean : {}".format(mean))
+            return {"accuracy": mean}
+
+        else:
+            gpu_rank = torch.cuda.current_device()
+
+            predictions, labels = p
+            predictions = predictions
+            labels = labels.flatten()
+            predictions = predictions.argmax(axis=-1).flatten()
+
+            batch_accuracy = accuracy.compute(references=labels, predictions=predictions)["accuracy"]
+            with open("store_values_{}".format(gpu_rank), 'a') as file:
+                file.write(f"{batch_accuracy}\n")
+
+        return {"accuracy": batch_accuracy}

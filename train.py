@@ -4,13 +4,17 @@ import datasets
 from configs import configs
 from data.raw import get_dataset
 import torch
-from evaluation.metrics import compute_accuracy
+from evaluation.metrics import compute_accuracy_closure
 from vlm.utils_vlm import BatchDataCollator, get_vlm
+import threading
+
+
 
 
 def main():
     torch._dynamo.config.suppress_errors = True
     torch.set_default_dtype(torch.float16)
+    lock = threading.Lock()
 
     config = configs.load_configs()["TRAIN"]
 
@@ -83,6 +87,7 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
+        batch_eval_metrics=True
 
     )
 
@@ -92,7 +97,7 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
-        compute_metrics=compute_accuracy,
+        compute_metrics=compute_accuracy_closure(lock,4),
     )
 
     trainer.train()
