@@ -41,7 +41,7 @@ def compute_accuracy_closure(input_lock, input_num_gpu):
                         mean = total_sum / count
 
                     print("Mean : {}".format(mean))
-            return {"accuracy": mean}
+            return {"eval_accuracy": mean}
 
         else:
             gpu_rank = torch.cuda.current_device()
@@ -55,4 +55,4 @@ def compute_accuracy_closure(input_lock, input_num_gpu):
             with open("store_values_{}".format(gpu_rank), 'a') as file:
                 file.write(f"{batch_accuracy}\n")
 
-        return {"accuracy": batch_accuracy}
+        return {"eval_accuracy": batch_accuracy}
