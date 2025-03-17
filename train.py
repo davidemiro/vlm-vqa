@@ -24,8 +24,8 @@ def main():
         dataset_val = datasets.load_from_disk(config['local_val_path'])
     else:
 
-        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'])
-        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'])
+        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], float(config['train_p']))
+        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'], float(config['val_p']))
 
         dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
         dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))

@@ -7,7 +7,7 @@ from vlm.processing_vlm import VLMProcessor
 from transformers import DefaultDataCollator
 
 
-def get_dataset(annotations_path, questions_path):
+def get_dataset(annotations_path, questions_path, p):
     annotations = datasets.load_dataset("json", data_files=annotations_path, field="annotations")
     annotations = annotations["train"]
     annotations = pandas.DataFrame(annotations)
@@ -20,8 +20,9 @@ def get_dataset(annotations_path, questions_path):
 
     dataset = pandas.merge(questions, annotations, on="question_id")
     dataset = datasets.Dataset.from_pandas(dataset)
+    dataset = dataset.shuffle()
 
-    return dataset.select(range(int(0.20 * len(dataset))))
+    return dataset.select(range(int(p * len(dataset))))
 
 
 class RawDataCollator(DefaultDataCollator):
