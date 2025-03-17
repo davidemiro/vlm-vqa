@@ -3,7 +3,9 @@ import os
 accuracy = evaluate.load("accuracy")
 
 
-def compute_f1_score(p, compute_result=False):
+def compute_accuracy(p, compute_result=False):
+
+    print("Computing accuracy... {}".format(compute_result))
     if compute_result:
         total_sum = 0
         count = 0

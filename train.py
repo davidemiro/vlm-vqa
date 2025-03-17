@@ -4,7 +4,7 @@ import datasets
 from configs import configs
 from data.raw import get_dataset
 import torch
-from evaluation.metrics import compute_f1_score
+from evaluation.metrics import compute_accuracy
 from vlm.utils_vlm import BatchDataCollator, get_vlm
 
 
@@ -94,7 +94,7 @@ def main():
         train_dataset=dataset_train,
         eval_dataset=dataset_val,
         data_collator=data_collator_batch,
-        compute_metrics=compute_f1_score,
+        compute_metrics=compute_accuracy,
     )
 
     trainer.train()
