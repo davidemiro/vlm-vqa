@@ -55,4 +55,4 @@ def compute_accuracy_closure(input_lock, input_num_gpu):
             with open("store_values_{}".format(gpu_rank), 'a') as file:
                 file.write(f"{batch_accuracy}\n")
 
-        return {"eval_accuracy": batch_accuracy}
+            return {"eval_accuracy": batch_accuracy}
