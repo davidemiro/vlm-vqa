@@ -83,8 +83,7 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
-        batch_eval_metrics=True,
-        dataloader_num_workers=32
+        batch_eval_metrics=True
 
     )
 
