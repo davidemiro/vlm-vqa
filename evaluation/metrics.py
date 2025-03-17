@@ -1,6 +1,6 @@
 import evaluate
 import os
-f1_score = evaluate.load("f1")
+accuracy = evaluate.load("accuracy")
 
 
 def compute_f1_score(p, compute_result=False):
@@ -24,7 +24,7 @@ def compute_f1_score(p, compute_result=False):
             os.remove("store_values")
 
             mean = total_sum / count
-        return {"f1_score" : mean}
+        return {"accuracy" : mean}
 
     else:
 
@@ -33,8 +33,8 @@ def compute_f1_score(p, compute_result=False):
         labels = labels.flatten()
         predictions = predictions.argmax(axis=-1).flatten()
 
-        batch_accuracy = f1_score.compute(references=labels, predictions=predictions)["f1"]
+        batch_accuracy = accuracy.compute(references=labels, predictions=predictions, average="macro")["f1"]
         with open("store_values", 'a') as file:
             file.write(f"{batch_accuracy}\n")
 
-    return {"f1_score": batch_accuracy}
+    return {"accuracy": batch_accuracy}

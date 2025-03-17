@@ -75,7 +75,7 @@ def main():
         dataloader_pin_memory=True,
         load_best_model_at_end=False,
         logging_steps=8,
-        metric_for_best_model="f1_score",
+        metric_for_best_model="accuracy",
         logging_dir="./logs",
         save_total_limit=1,
         fp16=True,
