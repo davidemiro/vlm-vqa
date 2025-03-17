@@ -14,7 +14,6 @@ import threading
 def main():
     torch._dynamo.config.suppress_errors = True
     torch.set_default_dtype(torch.float16)
-    lock = threading.Lock()
 
     config = configs.load_configs()["TRAIN"]
 
@@ -73,7 +72,6 @@ def main():
         num_train_epochs=int(config["num_train_epochs"]),
         optim=config["optim"],
         push_to_hub=True,
-        save_only_model=True,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
         load_best_model_at_end=False,
@@ -85,6 +83,7 @@ def main():
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
+        batch_eval_metrics=True
 
     )
 

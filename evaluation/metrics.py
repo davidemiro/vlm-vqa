@@ -37,8 +37,8 @@ def compute_accuracy_closure(input_lock, input_num_gpu):
                         if count == 0:
                             return 0
 
-                        os.remove("store_values_{}".format(gpu_rank))
-                        mean = total_sum / count
+                    os.remove("store_values_{}".format(gpu_rank))
+                    mean = total_sum / count
 
                     print("Mean : {}".format(mean))
             return {"eval_accuracy": mean}
