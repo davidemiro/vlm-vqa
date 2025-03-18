@@ -62,7 +62,7 @@ def main():
         save_strategy="steps",
         eval_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps'])),
         save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps'])),
-        torch_empty_cache_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps'])),
+        torch_empty_cache_steps=100,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
         per_device_train_batch_size=int(config["batch_size"]),
