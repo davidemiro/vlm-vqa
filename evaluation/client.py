@@ -67,7 +67,7 @@ class VLMClient(CachingClient):
                 hlog(f"Loading model {checkpoint} and caching in memory...")
                 config = AutoConfig.from_pretrained(checkpoint)
                 model = VLMForConditionalGeneration.from_pretrained(
-                    checkpoint, config=config, torch_dtype=torch.bfloat16, device_map="auto"
+                    checkpoint, config=config, torch_dtype=torch.float16, device_map="auto"
                 ).eval()
                 processor = AutoProcessor.from_pretrained(checkpoint)
                 _models[checkpoint] = LoadedVLMForConditionalGeneration(model, processor)
