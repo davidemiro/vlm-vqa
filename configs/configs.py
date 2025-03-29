@@ -20,6 +20,9 @@ def load_configs():
 
     return configs
 
+def to_bool(value):
+    return True if value == 'True' else False
+
 
 
 

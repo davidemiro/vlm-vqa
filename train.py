@@ -2,6 +2,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import Trainer, TrainingArguments
 import datasets
 from configs import configs
+from configs.configs import to_bool
 from data.raw import get_dataset
 import torch
 from vlm.utils_vlm import BatchDataCollator, get_vlm
@@ -10,7 +11,7 @@ from vlm.utils_vlm import BatchDataCollator, get_vlm
 
 
 def main():
-    torch._dynamo.config.suppress_errors = True
+
     torch.set_default_dtype(torch.float16)
 
     config = configs.load_configs()["TRAIN"]
@@ -19,7 +20,7 @@ def main():
         torch.cuda.set_device(int(config["local_rank"]))
         print(config["local_rank"])
 
-    if bool(config["load_dataset"]):
+    if to_bool(config["load_dataset"]):
 
         dataset_train = datasets.load_from_disk(config['local_train_path'])
         dataset_val = datasets.load_from_disk(config['local_val_path'])
@@ -41,7 +42,7 @@ def main():
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
 
-    if bool(config["lora"]):
+    if to_bool(config["lora"]):
         lora_config = LoraConfig(
             r=int(config['lora_rank']),
             lora_alpha=int(config['lora_alpha']),
@@ -58,10 +59,9 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        evaluation_strategy="steps",  # Evaluate at the end of each epoch
+        evaluation_strategy="no",  # Evaluate at the end of each epoch
         save_strategy="steps",
-        eval_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
-        save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
+        save_steps=1, #len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
