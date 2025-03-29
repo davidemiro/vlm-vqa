@@ -57,9 +57,7 @@ def main():
 
     data_collator_batch = BatchDataCollator(processor)
 
-    dataset_train = dataset_train.select(range(512))
 
-    print("steps: {}".format(len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu']))))
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
