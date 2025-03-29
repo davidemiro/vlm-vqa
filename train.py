@@ -72,7 +72,6 @@ def main():
         push_to_hub=False,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
-        load_best_model_at_end=True,
         logging_steps=8,
         logging_dir="./logs",
         save_total_limit=1,
