@@ -1,65 +1,35 @@
-
 from vlm.modelling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
-from torch.distributed.checkpoint import (
-    FileSystemReader,
-)
-
-import torch.distributed as dist
-
-from torch.distributed.fsdp import (
-    FullyShardedDataParallel as FSDP,
-    StateDictType
-)
-
-import torch.distributed.checkpoint as dist_cp
 import os
 
-# Manually set RANK and WORLD_SIZE for a single process
-os.environ["RANK"] = "0"
-os.environ["WORLD_SIZE"] = "1"
-os.environ["MASTER_ADDR"] = "localhost"  # Required for init
-os.environ["MASTER_PORT"] = "12355"
+
+import torch.distributed.checkpoint as dist_cp
+
+
 
 model_name = "mirodavide/vlm-vqa"
-model_path = "vlm_checkpoint/"
+model_path = "/content/drive/MyDrive/train_vlm_vqa_1e05_lr"
 
 
-def load_model_sharded(model, rank, path):
+def load_model_sharded(model, model_path):
+    state_dict = {
+        "model": model.state_dict(),
+    }
 
-    reader = FileSystemReader(path)
+    # since no progress group is initialized, DCP will disable any collectives.
+    dist_cp.load(
+        state_dict=state_dict,
+        checkpoint_id=model_path,
+    )
+    model.load_state_dict(state_dict["model"])
 
-    dist.init_process_group("nccl", rank=rank, world_size=1)
-
-    with FSDP.state_dict_type(model, StateDictType.SHARDED_STATE_DICT):
-        checkpoint = {"model": model.state_dict()}
-        if rank == 0:
-            ck = checkpoint.keys()
-            print(f" checkpoint key len = {len(ck)} and \n keys =  {ck}")
-
-
-        dist_cp.load_state_dict(
-            state_dict=checkpoint,
-            storage_reader=reader,
-            process_group=dist.group.WORLD,
-            coordinator_rank=0,
-            no_dist=False,
-        )
-        if rank == 0:
-            print(f"checkpoint after load_state_dict()")
-            ck = checkpoint.keys()
-            print(f" checkpoint key len = {len(ck)} and \n keys =  {ck}")
-        model.load_state_dict(checkpoint["model"])
-    if rank == 0:
-        print(f"Sharded state checkpoint loaded from {path}")
-
-        return model
+    return model
 
 
 vlm_config = VLMConfig(text_length=32, num_patches=257, visual_embed_dim=768)
 vlm_model = VLMForCausalLM(vlm_config)
 
-load_model_sharded(vlm_model, 4, model_path)
+load_model_sharded(vlm_model, model_path)
 
 vlm_model.save_pretrained("vlm-vqa-1.0")
 vlm_model.push_to_hub()
