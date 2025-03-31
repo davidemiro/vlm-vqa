@@ -35,8 +35,8 @@ vlm_model = VLMForCausalLM(vlm_config)
 print("C")
 load_model_sharded(vlm_model, model_path)
 print("D")
-vlm_model.save_pretrained("vlm-vqa-1.0")
-vlm_model.push_to_hub()
+vlm_model.save_pretrained("/content/drive/MyDrive/train_vlm_vqa_1e05_lr/vlm-vqa-1.0")
+vlm_model.push_to_hub(repo_id=model_name)
 
 
 
