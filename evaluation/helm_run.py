@@ -9,7 +9,7 @@ parser.add_argument("--token", type=str, default=None, help="The HuggingFace tok
 args = parser.parse_args()
 
 huggingface_cli = "huggingface-cli login --token {}".format(args.token)
-helm_run = helm_run = "helm-run -ras vqa:dataset=test,model=mirodavide/vlm-vqa --suite my-suite --max-eval-instances 10 --disable-cache"
+helm_run = helm_run = "helm-run --run-entries vqa:dataset=test,model=mirodavide/vlm-vqa --suite my-suite --max-eval-instances 10 --disable-cache"
 
 
 try:
