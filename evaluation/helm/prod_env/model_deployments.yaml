@@ -1,5 +1,5 @@
 model_deployments:
-  - name: mirodavide/vlm-vqa
+  - name: vlm-vqa
     model_name: mirodavide/vlm-vqa
     tokenizer_name: google/gemma-2b
     max_sequence_length: 20
