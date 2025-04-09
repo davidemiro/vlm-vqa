@@ -55,7 +55,6 @@ class VLMClient(CachingClient):
         self.tokenizer = tokenizer
         self.tokenizer_name = tokenizer_name
         self._device: str = get_torch_device_name()
-        print("Ciao")
 
     def _get_model(self, checkpoint: str) -> LoadedVLMForConditionalGeneration:
         global _models_lock
