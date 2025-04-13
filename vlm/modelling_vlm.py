@@ -93,7 +93,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
         self.linear_projector_visual_embedding = nn.Linear(config.old_num_patches, config.num_patches)
-        self.vit = Dinov2Model(config=config.vit_config)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base")
         self.num_patches = config.num_patches
 
         self.image_token_id = self.config.image_token_id
