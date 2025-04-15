@@ -53,11 +53,12 @@ class VLMClient(CachingClient):
     It has been trained specifically for Visual Question Answering task.
     """
 
-    def __init__(self, tokenizer: Tokenizer, tokenizer_name: str, cache_config: CacheConfig):
+    def __init__(self, tokenizer: Tokenizer, tokenizer_name: str, cache_config: CacheConfig, token=""):
         super().__init__(cache_config=cache_config)
         self.tokenizer = tokenizer
         self.tokenizer_name = tokenizer_name
         self._device: str = get_torch_device_name()
+        self.token = token
 
     def _get_model(self, checkpoint: str) -> LoadedVLMForConditionalGeneration:
         global _models_lock
@@ -68,10 +69,11 @@ class VLMClient(CachingClient):
             if checkpoint not in _models or _models[checkpoint] is None:
                 hlog(f"Loading model {checkpoint} and caching in memory...")
                 config = AutoConfig.from_pretrained(checkpoint)
+                processor = VLMProcessor(config, token=self.token)
                 model = VLMForConditionalGeneration.from_pretrained(
                     checkpoint, config=config, torch_dtype=torch.float16, device_map="auto"
                 ).eval()
-                processor = AutoProcessor.from_pretrained(checkpoint)
+
                 _models[checkpoint] = LoadedVLMForConditionalGeneration(model, processor)
             loaded_model_processor = _models[checkpoint]
 
