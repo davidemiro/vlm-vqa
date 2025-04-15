@@ -30,12 +30,15 @@ torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
 
 
-@dataclass(frozen=True)
 class LoadedVLMForConditionalGeneration:
     """Loaded model and processor for PaliGemma."""
 
     model: VLMForConditionalGeneration
     processor: AutoProcessor
+
+    def __init__(self, model: VLMForConditionalGeneration, processor: AutoProcessor):
+        self.model = model
+        self.processor = processor
 
 
 _models_lock: Lock = Lock()
@@ -80,7 +83,9 @@ class VLMClient(CachingClient):
 
         loaded_model_processor = self._get_model(request.model_deployment)
         model = loaded_model_processor.model
+        print(type(model))
         processor = loaded_model_processor.processor
+        print(type(processor))
         generation_args = {"max_new_tokens": request.max_tokens}
 
         images: List[Image.Image] = []
