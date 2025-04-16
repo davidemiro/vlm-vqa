@@ -183,8 +183,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             output_hidden_states: Optional[bool] = None,
             return_dict: Optional[bool] = None,
             num_logits_to_keep: int = 0,
-            last_cache_position: int = 0,
-            is_training: Optional[bool] = False,
+            last_cache_position: int = 0
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
 
         print("HEKDS")
@@ -202,7 +201,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         print("HELLO")
         print(is_training)
         causal_mask = self._update_causal_mask(
-            attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
+            attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, False
         )
         outputs = self.model(
             attention_mask=causal_mask,
