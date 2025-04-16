@@ -33,7 +33,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         return_dict: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
         num_logits_to_keep: int = 0,
-        last_cache_position: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
 
@@ -185,7 +184,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             return_dict: Optional[bool] = None,
             num_logits_to_keep: int = 0,
             last_cache_position: int = 0,
-            is_training: Optional[bool] = False,
+            is_training: Optional[bool] = False
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
 
         visual_embeds = self.vit(pixel_values)
