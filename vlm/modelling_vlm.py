@@ -91,16 +91,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
 
-        self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.linear_projector_visual_embedding = nn.Linear(config.old_num_patches, config.num_patches)
-        self.vit = AutoModel.from_pretrained("facebook/dinov2-base")
-        self.num_patches = config.num_patches
-
-        self.image_token_id = self.config.image_token_id
-        self.pad_token_id = self.config.pad_token_id
-
-        self.model.embed_tokens.requires_grad = False
-
 
     def get_input_embeddings(self):
         return self.model.get_input_embeddings()
@@ -193,6 +183,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             output_hidden_states: Optional[bool] = None,
             return_dict: Optional[bool] = None,
             num_logits_to_keep: int = 0,
+            last_cache_position: int = 0,
+            is_training: Optional[bool] = False,
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
 
         visual_embeds = self.vit(pixel_values)
@@ -218,7 +210,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
-            cache_position=cache_position,
+            cache_position=last_cache_position,
             num_logits_to_keep=num_logits_to_keep,
         )
 
@@ -256,3 +248,5 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             attentions=outputs.attentions,
             image_hidden_states=visual_embeds if pixel_values is not None else None,
         )
+
+model = V
