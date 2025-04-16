@@ -184,8 +184,10 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             return_dict: Optional[bool] = None,
             num_logits_to_keep: int = 0,
             last_cache_position: int = 0,
-            is_training: Optional[bool] = False
+            is_training: Optional[bool] = False,
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
+
+        print("HEKDS")
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
