@@ -210,7 +210,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
-            cache_position=last_cache_position,
+            cache_position=cache_position,
             num_logits_to_keep=num_logits_to_keep,
         )
 
