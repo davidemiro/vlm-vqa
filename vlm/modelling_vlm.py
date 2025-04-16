@@ -197,7 +197,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         text_embeds = self.model.embed_tokens(input_ids)
         input_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
-
+        print("HELLO")
+        print(is_training)
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
