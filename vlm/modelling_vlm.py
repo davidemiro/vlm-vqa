@@ -2,9 +2,10 @@ from dataclasses import dataclass
 from typing import Optional, Union, Tuple, List
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, HybridCache, Dinov2Model, GenerationMixin, Cache, StaticCache, AutoModel
+from transformers import Gemma2ForCausalLM, HybridCache, GenerationMixin, Cache, StaticCache, AutoModel
 from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
+
 
 class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
@@ -166,11 +167,74 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
                     token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
                 )
         return causal_mask
+    
+    def get_image_features(self, pixel_values: torch.FloatTensor):
+        """
+        Obtains image last hidden states from the vision tower and apply multimodal projection.
+
+        Args:
+            pixel_values (`torch.FloatTensor]` of shape `(batch_size, channels, height, width)`)
+               The tensors corresponding to the input images.
+        Returns:
+            image_features (`torch.Tensor`): Image feature tensor of shape `(num_images, image_length, embed_dim)`).
+        """
+        image_outputs = self.vit(pixel_values)
+        selected_image_feature = image_outputs.last_hidden_state
+        image_features = self.linear_projector(selected_image_feature)
+        image_features = image_features / (self.config.text_config.hidden_size**0.5)
+        return image_features
+
+    def prepare_inputs_for_generation(
+            self,
+            input_ids,
+            past_key_values=None,
+            inputs_embeds=None,
+            cache_position=None,
+            position_ids=None,
+            pixel_values=None,
+            attention_mask=None,
+            token_type_ids=None,
+            use_cache=True,
+            logits_to_keep=None,
+            labels=None,
+            **kwargs,
+    ):
+        # Overwritten -- custom `position_ids` and `pixel_values` handling
+        
+        model_inputs = self.model.prepare_inputs_for_generation(
+            input_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            cache_position=cache_position,
+            use_cache=use_cache,
+            logits_to_keep=logits_to_keep,
+            token_type_ids=token_type_ids,
+            **kwargs,
+        )
+
+        # position_ids in Paligemma are 1-indexed
+        if model_inputs.get("position_ids") is not None:
+            model_inputs["position_ids"] += 1
+        # If we're in cached decoding stage, pixel values should be None because input ids do not contain special image token anymore
+        # Otherwise we need pixel values to be passed to model. NOTE: use_cache=False needs pixel_values always
+        if cache_position[0] == 0:
+            model_inputs["pixel_values"] = pixel_values
+        is_training = token_type_ids is not None and labels is not None
+        if cache_position[0] == 0 and isinstance(past_key_values, HybridCache):
+            input_tensor = inputs_embeds if inputs_embeds is not None else input_ids
+            causal_mask = self._update_causal_mask(
+                attention_mask, token_type_ids, past_key_values, cache_position, input_tensor, is_training
+            )
+            model_inputs["attention_mask"] = causal_mask
+
+        return model_inputs
 
     def forward(
             self,
-            input_ids: torch.LongTensor = None,
-            pixel_values: torch.FloatTensor = None,
+            input_ids: Optional[torch.LongTensor] = None,
+            pixel_values: Optional[torch.FloatTensor] = None,
             attention_mask: Optional[torch.Tensor] = None,
             position_ids: Optional[torch.LongTensor] = None,
             past_key_values: Optional[Union[List[torch.FloatTensor], Cache]] = None,
@@ -182,9 +246,40 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             output_attentions: Optional[bool] = None,
             output_hidden_states: Optional[bool] = None,
             return_dict: Optional[bool] = None,
-            num_logits_to_keep: int = 0,
-            last_cache_position: int = 0
+            logits_to_keep: Union[int, torch.Tensor] = 0,
+            **lm_kwargs,
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
+
+        if (input_ids is None) ^ (inputs_embeds is not None):
+            raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
+
+        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
+        output_hidden_states = (
+            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
+        )
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        is_training = token_type_ids is not None and labels is not None
+
+        # Replace image id woth PAD if the image token if OOV, to avoid index-errors
+        if input_ids is not None and self.config.image_token_index >= self.vocab_size:
+            special_image_mask = input_ids == self.config.image_token_index
+            llm_input_ids = input_ids.clone()
+            llm_input_ids[special_image_mask] = 0
+        else:
+            llm_input_ids = input_ids
+
+        if inputs_embeds is None:
+            inputs_embeds = self.get_input_embeddings()(llm_input_ids)
+
+        if cache_position is None:
+            past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
+            cache_position = torch.arange(
+                past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device
+            )
+
+        if position_ids is None:
+            position_ids = cache_position.unsqueeze(0) + 1
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
@@ -197,9 +292,9 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         text_embeds = self.model.embed_tokens(input_ids)
         inputs_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
         causal_mask = self._update_causal_mask(
-            attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, False
+            attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
-        outputs = self.model(
+        outputs: CausalLMOutputWithPast = self.language_model(
             attention_mask=causal_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
@@ -207,9 +302,10 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             use_cache=use_cache,
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
+            return_dict=True,
             cache_position=cache_position,
-            num_logits_to_keep=num_logits_to_keep,
+            logits_to_keep=logits_to_keep,
+            **lm_kwargs,
         )
 
         logits = outputs.logits
