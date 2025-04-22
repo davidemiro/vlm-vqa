@@ -262,8 +262,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         is_training = token_type_ids is not None and labels is not None
 
         # Replace image id woth PAD if the image token if OOV, to avoid index-errors
-        if input_ids is not None and self.config.image_token_index >= self.vocab_size:
-            special_image_mask = input_ids == self.config.image_token_index
+        if input_ids is not None and self.config.image_token_id >= self.vocab_size:
+            special_image_mask = input_ids == self.config.image_token_id
             llm_input_ids = input_ids.clone()
             llm_input_ids[special_image_mask] = 0
         else:
