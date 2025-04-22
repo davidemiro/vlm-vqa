@@ -17,7 +17,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
 
-
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -35,7 +34,6 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         cache_position: Optional[torch.LongTensor] = None,
         num_logits_to_keep: int = 0,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
-
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
@@ -283,9 +281,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
-        visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, num_patches]
-        visual_embeds = self.linear_projector_visual_embedding(visual_embeds) #[batch_size, hidden_size, new_num_patches]
-        visual_embeds = visual_embeds.permute(0, 2, 1) #[batch_size, hidden_size, new_num_patches]
 
         input_ids = input_ids[:, self.num_patches:]
 
