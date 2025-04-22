@@ -8,6 +8,7 @@ class VLMConfig(Gemma2Config):
         self.visual_embed_dim = visual_embed_dim
         self.pad_token_id = 0
         self.image_token_id = 256000
+        self.vocab_size += 1
         self.vit_config = AutoConfig.from_pretrained("facebook/dinov2-base")
         self.text_length = text_length
         self.old_num_patches = 257

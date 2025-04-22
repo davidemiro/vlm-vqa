@@ -289,7 +289,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
-        outputs: CausalLMOutputWithPast = self.language_model(
+        outputs: CausalLMOutputWithPast = self.model(
             attention_mask=causal_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
@@ -322,7 +322,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             # Flatten the tokens
             loss_fct = nn.CrossEntropyLoss()
 
-            flat_logits = shift_logits.view(-1, self.config.text_config.vocab_size)
+            flat_logits = shift_logits.view(-1, self.config.vocab_size)
             flat_labels = shift_labels.view(-1).to(shift_logits.device)
             loss = loss_fct(flat_logits, flat_labels)
         if not return_dict:
