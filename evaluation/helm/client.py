@@ -114,7 +114,7 @@ class VLMClient(CachingClient):
                     def do_it() -> Dict[str, Any]:
                         with torch.inference_mode():
                             generation = model.generate(
-                                **model_inputs, max_new_tokens=request.max_tokens, do_sample=False
+                                **model_inputs, max_new_tokens=request.max_tokens, do_sample=False, use_cache=False
                             )[0]
                             if not request.echo_prompt:
                                 generation = generation[input_len:]
