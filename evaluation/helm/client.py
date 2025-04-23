@@ -56,6 +56,7 @@ class VLMClient(CachingClient):
     def __init__(self, tokenizer: Tokenizer, tokenizer_name: str, cache_config: CacheConfig, token=""):
         super().__init__(cache_config=cache_config)
         self.tokenizer = tokenizer
+        print(self.tokenizer)
         self.tokenizer_name = tokenizer_name
         self._device: str = get_torch_device_name()
         self.token = token
@@ -119,7 +120,7 @@ class VLMClient(CachingClient):
                             )[0]
                             if not request.echo_prompt:
                                 generation = generation[input_len:]
-                            decoded = processor.decode(generation, skip_special_tokens=True)
+                            decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
                             return {"output": decoded}
 
                     # Include the prompt and model name in the cache key
