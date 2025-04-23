@@ -59,6 +59,7 @@ class VLMClient(CachingClient):
         self.tokenizer_name = tokenizer_name
         self._device: str = get_torch_device_name()
         self.token = token
+        print(self._device)
 
     def _get_model(self, checkpoint: str) -> LoadedVLMForConditionalGeneration:
         global _models_lock
@@ -85,9 +86,7 @@ class VLMClient(CachingClient):
 
         loaded_model_processor = self._get_model(request.model_deployment)
         model = loaded_model_processor.model
-        print(type(model))
         processor = loaded_model_processor.processor
-        print(type(processor))
         generation_args = {"max_new_tokens": request.max_tokens}
 
         images: List[Image.Image] = []
@@ -103,7 +102,7 @@ class VLMClient(CachingClient):
                 raise ValueError(f"Unrecognized MediaObject type {media_object.type}")
         prompt_text: str = "\n".join(prompt_pieces)
         model_inputs = processor(text=prompt_text, image=images, return_tensors="pt")
-        input_len = model_inputs["input_ids"].shape[-1]
+        input_len = model_inputs["input_ids"].shape[-1].to(self._device)
 
         completions: List[GeneratedOutput] = []
         with htrack_block(f"Generating for prompt: {prompt_text}"):
