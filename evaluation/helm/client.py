@@ -102,7 +102,7 @@ class VLMClient(CachingClient):
         prompt_text: str = "\n".join(prompt_pieces)
         model_inputs = processor(text=prompt_text, image=images, return_tensors="pt")
 
-        input_len = model_inputs["input_ids"].shape[-1].to(self._device)
+        input_len = model_inputs["input_ids"]
 
         model_inputs = {k: v.to(self._device) for k, v in model_inputs.items()}
 
