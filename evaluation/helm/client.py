@@ -19,6 +19,7 @@ from helm.tokenizers.tokenizer import Tokenizer
 
 from vlm.modelling_vlm import VLMForConditionalGeneration, VLMForCausalLM
 from vlm.processing_vlm import VLMProcessor
+from transformers import AutoTokenizer
 
 try:
     from PIL import Image
@@ -55,8 +56,7 @@ class VLMClient(CachingClient):
 
     def __init__(self, tokenizer: Tokenizer, tokenizer_name: str, cache_config: CacheConfig, token=""):
         super().__init__(cache_config=cache_config)
-        self.tokenizer = tokenizer
-        print(self.tokenizer)
+        self.tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b-it")
         self.tokenizer_name = tokenizer_name
         self._device: str = get_torch_device_name()
         self.token = token
