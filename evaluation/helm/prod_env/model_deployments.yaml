@@ -1,8 +1,8 @@
 model_deployments:
   - name: mirodavide/vlm-vqa
     model_name: mirodavide/vlm-vqa
-    tokenizer_name: google/gemma-2b
+    tokenizer_name: google/gemma-2-2b-it
     max_sequence_length: 20
     model_max_length: 20
     client_spec:
-      class_name: "evaluation.helm.client.VLMClient"
+      class_name: "VLMClient"
