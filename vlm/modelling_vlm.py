@@ -266,7 +266,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **lm_kwargs,
         )
 
-        print(outputs)
+        return outputs
 
         logits = outputs[0]
         loss = None
