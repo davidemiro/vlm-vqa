@@ -266,6 +266,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **lm_kwargs,
         )
 
+        print(outputs)
+
         logits = outputs[0]
         loss = None
         if labels is not None:
@@ -288,11 +290,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             flat_logits = shift_logits.view(-1, self.config.vocab_size)
             flat_labels = shift_labels.view(-1).to(shift_logits.device)
             loss = loss_fct(flat_logits, flat_labels)
-        if not return_dict:
-            output = (logits,) + outputs[1:]
-            return (loss,) + output if loss is not None else output
 
-        return VLMCausalLMOutputWithPast(
+        output = VLMCausalLMOutputWithPast(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,
@@ -300,3 +299,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             attentions=outputs.attentions,
             image_hidden_states=visual_embeds if pixel_values is not None else None,
         )
+
+        return output if return_dict else output.to_tuple()
+
+
