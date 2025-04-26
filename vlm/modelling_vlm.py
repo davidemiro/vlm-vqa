@@ -33,6 +33,7 @@ class VLMForCausalLM(Gemma2ForCausalLM, GenerationMixin):
         return_dict: Optional[bool] = None,
         cache_position: Optional[torch.LongTensor] = None,
         num_logits_to_keep: int = 0,
+        **kwargs
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
         visual_embeds = self.vit(pixel_values)
