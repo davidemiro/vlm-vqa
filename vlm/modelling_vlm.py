@@ -7,7 +7,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
 
 
-class VLMForCausalLM(Gemma2ForCausalLM, GenerationMixin):
+class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
@@ -250,14 +250,10 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         text_embeds = self.model.embed_tokens(input_ids)
         inputs_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
-        print("BEFORE")
-        print(attention_mask)
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
 
-        print("AFTER")
-        print(causal_mask)
         outputs = self.model(
             input_ids=None,
             attention_mask=causal_mask,
@@ -274,7 +270,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         hidden_states = outputs.hidden_states
 
         slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
-        logits = self.lm_head(hidden_states[:, slice_indices, :])
+        logits = self.model.lm_head(hidden_states[:, slice_indices, :])
         if self.config.final_logit_softcapping is not None:
             logits = logits / self.config.final_logit_softcapping
             logits = torch.tanh(logits)
