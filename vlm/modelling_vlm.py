@@ -57,6 +57,7 @@ class VLMCausalLMOutputWithPast(ModelOutput):
     attentions: Optional[Tuple[torch.FloatTensor]] = None
     image_hidden_states: Optional[torch.FloatTensor] = None
 
+
 class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
     def __init__(self, config: VLMConfig):
@@ -92,97 +93,68 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
     def _update_causal_mask(
             self,
-            attention_mask: Union[torch.Tensor, "BlockMask"],
-            input_tensor: torch.Tensor,
-            cache_position: torch.Tensor,
-            past_key_values: HybridCache,
-            output_attentions: bool,
+            attention_mask,
+            token_type_ids=None,
+            past_key_values=None,
+            cache_position=None,
+            input_tensor=None,
+            is_training: Optional[bool] = None,
     ):
 
-        dtype, device = input_tensor.dtype, input_tensor.device
-        sequence_length = input_tensor.shape[1]
-        if isinstance(past_key_values, (HybridCache, StaticCache)):
+        is_training = is_training if is_training is not None else self.training
+        using_static_cache = isinstance(past_key_values, StaticCache)
+        min_dtype = torch.finfo(self.dtype).min
+        if input_tensor is None:
+            input_tensor = attention_mask
+
+        inputs_lead_dim, sequence_length = input_tensor.shape[:2]
+        if using_static_cache:
+            target_length = past_key_values.get_max_cache_shape()
+        elif isinstance(past_key_values, HybridCache):
             target_length = past_key_values.get_max_cache_shape()
         else:
-            target_length = attention_mask.shape[-1] if attention_mask is not None else input_tensor.shape[1]
+            target_length = (
+                attention_mask.shape[-1]
+                if isinstance(attention_mask, torch.Tensor)
+                else cache_position[0] + sequence_length + 1
+            )
 
-        # In case the provided `attention` mask is 2D, we generate a causal mask here (4D).
-        causal_mask = self._prepare_4d_causal_attention_mask_with_cache_position(
-            attention_mask,
-            sequence_length=sequence_length,
-            target_length=target_length,
-            dtype=dtype,
-            device=device,
-            cache_position=cache_position,
-            batch_size=input_tensor.shape[0],
-        )
-        return causal_mask
-
-    @staticmethod
-    def _prepare_4d_causal_attention_mask_with_cache_position(
-            attention_mask: torch.Tensor,
-            sequence_length: int,
-            target_length: int,
-            dtype: torch.dtype,
-            device: torch.device,
-            cache_position: torch.Tensor,
-            batch_size: int,
-            **kwargs,
-    ):
-        """
-        Creates a causal 4D mask of shape `(batch_size, 1, query_length, key_value_length)` from a 2D mask of shape
-        `(batch_size, key_value_length)`, or if the input `attention_mask` is already 4D, do nothing.
-
-        Args:
-            attention_mask (`torch.Tensor`):
-                A 2D attention mask of shape `(batch_size, key_value_length)` or a 4D attention mask of shape
-                `(batch_size, 1, query_length, key_value_length)`.
-            sequence_length (`int`):
-                The sequence length being processed.
-            target_length (`int`):
-                The target length: when generating with static cache, the mask should be as long as the static cache,
-                to account for the 0 padding, the part of the cache that is not filled yet.
-            dtype (`torch.dtype`):
-                The dtype to use for the 4D attention mask.
-            device (`torch.device`):
-                The device to place the 4D attention mask on.
-            cache_position (`torch.Tensor`):
-                Indices depicting the position of the input sequence tokens in the sequence.
-            batch_size (`torch.Tensor`):
-                Batch size.
-        """
         if attention_mask is not None and attention_mask.dim() == 4:
             # In this case we assume that the mask comes already in inverted form and requires no inversion or slicing.
-            causal_mask = attention_mask
-        else:
-            min_dtype = torch.finfo(dtype).min
-            causal_mask = torch.full(
-                (sequence_length, target_length), fill_value=min_dtype, dtype=dtype, device=device
-            )
-            if sequence_length != 1:
+            return attention_mask
+
+        causal_mask = torch.full(
+            (sequence_length, target_length), fill_value=min_dtype, dtype=self.dtype, device=cache_position.device
+        )
+        # Causal diagonal mask only if training, otherwise attend to the whole prefix. Training-specific attn for prefix is handled below
+        if sequence_length != 1:
+            if is_training:
                 causal_mask = torch.triu(causal_mask, diagonal=1)
-            causal_mask *= torch.arange(target_length, device=device) > cache_position.reshape(-1, 1)
-            causal_mask = causal_mask[None, None, :, :].expand(batch_size, 1, -1, -1)
-            if attention_mask is not None:
-                causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
-                mask_length = attention_mask.shape[-1]
-                padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(
-                    causal_mask.device
-                )
-                padding_mask = padding_mask == 0
+            else:
+                causal_mask[:, :sequence_length] = 0.0
+
+        causal_mask *= torch.arange(target_length, device=cache_position.device) > cache_position.reshape(-1, 1)
+        causal_mask = causal_mask[None, None, :, :].expand(inputs_lead_dim, 1, -1, -1)
+        if attention_mask is not None:
+            causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
+            mask_length = attention_mask.shape[-1]
+
+            # First unmask prefix tokens during training
+            if is_training:
+                if token_type_ids is None:
+                    raise ValueError("Token type ids must be provided during training")
                 causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
-                    padding_mask, min_dtype
+                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
                 )
+
+            # Then apply padding mask (will mask pad tokens)
+            padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(causal_mask.device)
+            padding_mask = padding_mask == 0
+            causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
+                padding_mask, min_dtype
+            )
 
         return causal_mask
-    
-    def get_image_features(self, pixel_values: torch.FloatTensor):
-
-        image_outputs = self.vit(pixel_values)
-        selected_image_feature = image_outputs.last_hidden_state
-        image_features = self.linear_projector(selected_image_feature)
-        image_features = image_features / (self.config.text_config.hidden_size**0.5)
-        return image_features
 
     def prepare_inputs_for_generation(
             self,
