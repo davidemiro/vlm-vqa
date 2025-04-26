@@ -42,7 +42,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         input_ids = input_ids[:, self.num_patches:]
 
         text_embeds = self.model.embed_tokens(input_ids)
-        input_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
+        input_embeds = torch.cat((visual_embeds,text_embeds), dim=1)
 
         return super().forward(None, attention_mask, position_ids, past_key_values, input_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
@@ -91,51 +91,89 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         return self.model.tie_weights()
 
     def _update_causal_mask(
-        self, attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training: bool = False
+            self,
+            attention_mask: Union[torch.Tensor, "BlockMask"],
+            input_tensor: torch.Tensor,
+            cache_position: torch.Tensor,
+            past_key_values: HybridCache,
+            output_attentions: bool,
     ):
 
-        using_static_cache = isinstance(past_key_values, StaticCache)
-        dtype = inputs_embeds.dtype
-        min_dtype = torch.finfo(dtype).min
-        sequence_length = inputs_embeds.shape[1]
-        if using_static_cache:
-            target_length = past_key_values.get_max_length()
+        dtype, device = input_tensor.dtype, input_tensor.device
+        sequence_length = input_tensor.shape[1]
+        if isinstance(past_key_values, (HybridCache, StaticCache)):
+            target_length = past_key_values.get_max_cache_shape()
         else:
-            target_length = (
-                attention_mask.shape[-1]
-                if isinstance(attention_mask, torch.Tensor)
-                else cache_position[0] + sequence_length + 1
-            )
+            target_length = attention_mask.shape[-1] if attention_mask is not None else input_tensor.shape[1]
 
+        # In case the provided `attention` mask is 2D, we generate a causal mask here (4D).
+        causal_mask = self._prepare_4d_causal_attention_mask_with_cache_position(
+            attention_mask,
+            sequence_length=sequence_length,
+            target_length=target_length,
+            dtype=dtype,
+            device=device,
+            cache_position=cache_position,
+            batch_size=input_tensor.shape[0],
+        )
+        return causal_mask
+
+    @staticmethod
+    def _prepare_4d_causal_attention_mask_with_cache_position(
+            attention_mask: torch.Tensor,
+            sequence_length: int,
+            target_length: int,
+            dtype: torch.dtype,
+            device: torch.device,
+            cache_position: torch.Tensor,
+            batch_size: int,
+            **kwargs,
+    ):
+        """
+        Creates a causal 4D mask of shape `(batch_size, 1, query_length, key_value_length)` from a 2D mask of shape
+        `(batch_size, key_value_length)`, or if the input `attention_mask` is already 4D, do nothing.
+
+        Args:
+            attention_mask (`torch.Tensor`):
+                A 2D attention mask of shape `(batch_size, key_value_length)` or a 4D attention mask of shape
+                `(batch_size, 1, query_length, key_value_length)`.
+            sequence_length (`int`):
+                The sequence length being processed.
+            target_length (`int`):
+                The target length: when generating with static cache, the mask should be as long as the static cache,
+                to account for the 0 padding, the part of the cache that is not filled yet.
+            dtype (`torch.dtype`):
+                The dtype to use for the 4D attention mask.
+            device (`torch.device`):
+                The device to place the 4D attention mask on.
+            cache_position (`torch.Tensor`):
+                Indices depicting the position of the input sequence tokens in the sequence.
+            batch_size (`torch.Tensor`):
+                Batch size.
+        """
         if attention_mask is not None and attention_mask.dim() == 4:
             # In this case we assume that the mask comes already in inverted form and requires no inversion or slicing.
-            return attention_mask
-
-        causal_mask = torch.full(
-            (sequence_length, target_length), fill_value=min_dtype, dtype=dtype, device=cache_position.device
-        )
-        # Causal diagonal mask only if training, otherwise attend to the whole prefix. Training-specific attn for prefix is handled below
-        if sequence_length != 1:
-            if is_training:
-                causal_mask = torch.triu(causal_mask, diagonal=1)
-            else:
-                causal_mask[:, :sequence_length] = 0.0
-
-        causal_mask *= torch.arange(target_length, device=cache_position.device) > cache_position.reshape(-1, 1)
-        causal_mask = causal_mask[None, None, :, :].expand(inputs_embeds.shape[0], 1, -1, -1)
-        if attention_mask is not None:
-            causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
-            mask_length = attention_mask.shape[-1]
-            padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(causal_mask.device)
-            padding_mask = padding_mask == 0
-            causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
-                padding_mask, min_dtype
+            causal_mask = attention_mask
+        else:
+            min_dtype = torch.finfo(dtype).min
+            causal_mask = torch.full(
+                (sequence_length, target_length), fill_value=min_dtype, dtype=dtype, device=device
             )
-            # we are training thus we need to create a full mask on the image + prefix but causal on suffix
-            if is_training:
-                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
-                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
+            if sequence_length != 1:
+                causal_mask = torch.triu(causal_mask, diagonal=1)
+            causal_mask *= torch.arange(target_length, device=device) > cache_position.reshape(-1, 1)
+            causal_mask = causal_mask[None, None, :, :].expand(batch_size, 1, -1, -1)
+            if attention_mask is not None:
+                causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
+                mask_length = attention_mask.shape[-1]
+                padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(
+                    causal_mask.device
                 )
+                padding_mask = padding_mask == 0
+                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
+                    padding_mask, min_dtype
+                )
+
         return causal_mask
     
     def get_image_features(self, pixel_values: torch.FloatTensor):
@@ -162,7 +200,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **kwargs,
     ):
         # Overwritten -- custom `position_ids` and `pixel_values` handling
-        
+
         model_inputs = self.model.prepare_inputs_for_generation(
             input_ids,
             past_key_values=past_key_values,
@@ -223,17 +261,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         is_training = token_type_ids is not None and labels is not None
 
-        # Replace image id woth PAD if the image token if OOV, to avoid index-errors
-        if input_ids is not None and self.config.image_token_id >= self.vocab_size:
-            special_image_mask = input_ids == self.config.image_token_id
-            llm_input_ids = input_ids.clone()
-            llm_input_ids[special_image_mask] = 0
-        else:
-            llm_input_ids = input_ids
-
-        if inputs_embeds is None:
-            inputs_embeds = self.get_input_embeddings()(llm_input_ids)
-
         if cache_position is None:
             past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
             cache_position = torch.arange(
@@ -249,7 +276,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         input_ids = input_ids[:, self.num_patches:]
 
         text_embeds = self.model.embed_tokens(input_ids)
-        inputs_embeds = torch.cat((text_embeds, visual_embeds), dim=1)
+        inputs_embeds = torch.cat((visual_embeds, text_embeds), dim=1)
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
