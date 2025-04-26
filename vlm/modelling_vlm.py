@@ -253,6 +253,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
         outputs = self.model(
+            input_ids=None,
             attention_mask=causal_mask,
             position_ids=position_ids,
             past_key_values=past_key_values,
@@ -260,14 +261,19 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             use_cache=use_cache,
             output_attentions=output_attentions,
             output_hidden_states=output_hidden_states,
-            return_dict=True,
             cache_position=cache_position,
-            logits_to_keep=logits_to_keep,
             **lm_kwargs,
         )
 
+        hidden_states = outputs[0]
 
-        logits = outputs[0]
+        slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
+        logits = self.lm_head(hidden_states[:, slice_indices, :])
+        if self.config.final_logit_softcapping is not None:
+            logits = logits / self.config.final_logit_softcapping
+            logits = torch.tanh(logits)
+            logits = logits * self.config.final_logit_softcapping
+
         loss = None
         if labels is not None:
             # Upcast to float if we need to compute the loss to avoid potential precision issues
