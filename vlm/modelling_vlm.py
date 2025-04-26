@@ -7,7 +7,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
 
 
-class VLMForCausalLM(Gemma2ForCausalLM):
+class VLMForCausalLM(Gemma2ForCausalLM, GenerationMixin):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
