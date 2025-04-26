@@ -264,6 +264,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             cache_position=cache_position,
             **lm_kwargs,
         )
+        return outputs
 
         hidden_states = outputs[0]
 
