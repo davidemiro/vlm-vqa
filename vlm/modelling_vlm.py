@@ -92,26 +92,15 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         return self.model.tie_weights()
 
     def _update_causal_mask(
-            self,
-            attention_mask,
-            token_type_ids=None,
-            past_key_values=None,
-            cache_position=None,
-            input_tensor=None,
-            is_training: Optional[bool] = None,
+        self, attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training: bool = False
     ):
 
-        is_training = is_training if is_training is not None else self.training
         using_static_cache = isinstance(past_key_values, StaticCache)
-        min_dtype = torch.finfo(self.dtype).min
-        if input_tensor is None:
-            input_tensor = attention_mask
-
-        inputs_lead_dim, sequence_length = input_tensor.shape[:2]
+        dtype = inputs_embeds.dtype
+        min_dtype = torch.finfo(dtype).min
+        sequence_length = inputs_embeds.shape[1]
         if using_static_cache:
-            target_length = past_key_values.get_max_cache_shape()
-        elif isinstance(past_key_values, HybridCache):
-            target_length = past_key_values.get_max_cache_shape()
+            target_length = past_key_values.get_max_length()
         else:
             target_length = (
                 attention_mask.shape[-1]
@@ -124,7 +113,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             return attention_mask
 
         causal_mask = torch.full(
-            (sequence_length, target_length), fill_value=min_dtype, dtype=self.dtype, device=cache_position.device
+            (sequence_length, target_length), fill_value=min_dtype, dtype=dtype, device=cache_position.device
         )
         # Causal diagonal mask only if training, otherwise attend to the whole prefix. Training-specific attn for prefix is handled below
         if sequence_length != 1:
@@ -134,26 +123,20 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
                 causal_mask[:, :sequence_length] = 0.0
 
         causal_mask *= torch.arange(target_length, device=cache_position.device) > cache_position.reshape(-1, 1)
-        causal_mask = causal_mask[None, None, :, :].expand(inputs_lead_dim, 1, -1, -1)
+        causal_mask = causal_mask[None, None, :, :].expand(inputs_embeds.shape[0], 1, -1, -1)
         if attention_mask is not None:
             causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
             mask_length = attention_mask.shape[-1]
-
-            # First unmask prefix tokens during training
-            if is_training:
-                if token_type_ids is None:
-                    raise ValueError("Token type ids must be provided during training")
-                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
-                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
-                )
-
-            # Then apply padding mask (will mask pad tokens)
             padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(causal_mask.device)
             padding_mask = padding_mask == 0
             causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
                 padding_mask, min_dtype
             )
-
+            # we are training thus we need to create a full mask on the image + prefix but causal on suffix
+            if is_training:
+                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
+                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
+                )
         return causal_mask
 
     def prepare_inputs_for_generation(
