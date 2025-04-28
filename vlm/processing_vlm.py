@@ -37,7 +37,7 @@ class VLMProcessor(ProcessorMixin):
         text = IMAGE_TOKEN * self.num_patches + text
         text_tokenized = self.tokenizer(text, return_tensors=return_tensors)
 
-        pixel_values = self.feature_extractor(images=image, return_tensors="np")['pixel_values']
+        pixel_values = self.feature_extractor(images=image, return_tensors=return_tensors)['pixel_values']
 
         return {'input_ids': text_tokenized['input_ids'],
                 'attention_mask': text_tokenized['attention_mask'],
