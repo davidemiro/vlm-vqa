@@ -2,44 +2,46 @@ from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer, Proce
 from vlm.configuration_vlm import VLMConfig
 import torch
 
+IMAGE_TOKEN = "<image>"
 
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
+        self.tokenizer = self._vlm_tokenizer(self.tokenizer)
         self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', use_fast=True, token=token)
         self.context_length = config.context_length
         self.chat_template = None
+        self.num_patches = config.num_patches
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
-        text = "<bos>" + text + label
+        text = IMAGE_TOKEN * self.num_patches + text + label
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
-                                        return_tensors=return_tensors)
+                                        return_tensors=return_tensors, return_token_type_ids=True)
 
-        label_tokenized = self.tokenizer(label, truncation=True, padding="max_length", max_length=self.context_length,
-                                         return_tensors=return_tensors)['input_ids']
 
-        label_tokenized[label_tokenized == 0] = -100
 
-        pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
-                                    requires_grad=True, dtype=torch.float16)
+        labels_mask = text_tokenized["input_ids"]
 
-        return {'input_ids': text_tokenized['input_ids'].detach(),
-                'attention_mask': text_tokenized['attention_mask'].detach(),
-                'labels': label_tokenized.detach(),
-                'pixel_values': pixel_values.detach()}
+        labels_mask[text_tokenized["token_type_ids"] == 0] = -100
+
+        pixel_values = self.feature_extractor(images=image, return_tensors=return_tensors)['pixel_values']
+
+        return {'input_ids': text_tokenized['input_ids'],
+                'attention_mask': text_tokenized['attention_mask'],
+                'labels': labels_mask,
+                'pixel_values': pixel_values}
 
     def _inference_processing(self, text, image, return_tensors="np"):
-        text = "<bos>" + text
-        text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
-                                        return_tensors=return_tensors)
 
-        pixel_values = torch.tensor(self.feature_extractor(images=image, return_tensors="np")['pixel_values'],
-                                    requires_grad=True, dtype=torch.float16)
+        text = IMAGE_TOKEN * self.num_patches + text
+        text_tokenized = self.tokenizer(text, return_tensors=return_tensors)
 
-        return {'input_ids': text_tokenized['input_ids'].detach(),
-                'attention_mask': text_tokenized['attention_mask'].detach(),
-                'pixel_values': pixel_values.detach()}
+        pixel_values = self.feature_extractor(images=image, return_tensors="np")['pixel_values']
+
+        return {'input_ids': text_tokenized['input_ids'],
+                'attention_mask': text_tokenized['attention_mask'],
+                'pixel_values': pixel_values}
 
         def batch_decode(self, *args, **kwargs):
             return self.tokenizer.batch_decode(*args, **kwargs)
@@ -58,6 +60,11 @@ class VLMProcessor(ProcessorMixin):
             return self._inference_processing(text, image, return_tensors=return_tensors)
         else:
             return self._training_processing(text, image, label, return_tensors=return_tensors)
+
+    @staticmethod
+    def _vlm_tokenizer(tokenizer):
+        tokenizer.add_special_tokens({"additional_special_tokens": [IMAGE_TOKEN]})
+        return tokenizer
 
 
 
