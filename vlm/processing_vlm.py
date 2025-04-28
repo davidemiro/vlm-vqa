@@ -4,6 +4,7 @@ import torch
 
 IMAGE_TOKEN = "<image>"
 
+
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 

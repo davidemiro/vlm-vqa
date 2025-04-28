@@ -17,6 +17,10 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         self.image_token_id = self.config.image_token_id
         self.pad_token_id = self.config.pad_token_id
 
+        old_embed_token = self.model.embed_tokens
+        self.model.embed_tokens = torch.nn.Embedding(config.vocab_size, old_embed_token.hidden_size, self.pad_token_id)
+        self.model.embed_tokens.weight[:config.vocab_size - 1, :] = old_embed_token.weight
+
     def forward(
         self,
         input_ids: torch.LongTensor = None,
