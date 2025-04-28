@@ -32,7 +32,7 @@ class VLMProcessor(ProcessorMixin):
                 'labels': labels_mask,
                 'pixel_values': pixel_values}
 
-    def _inference_processing(self, text, image, return_tensors="np"):
+    def _inference_processing(self, text, image, return_tensors="pt"):
 
         text = IMAGE_TOKEN * self.num_patches + text
         text_tokenized = self.tokenizer(text, return_tensors=return_tensors)
