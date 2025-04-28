@@ -233,10 +233,11 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
-        input_ids = input_ids[:, self.num_patches:]
+        inputs_embeds = self.model.embed_tokens(input_ids)
 
-        text_embeds = self.model.embed_tokens(input_ids)
-        inputs_embeds = torch.cat((visual_embeds, text_embeds), dim=1)
+        visual_mask = (input_ids == self.config.image_token_id)
+        inputs_embeds[visual_mask] = visual_embeds
+
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
         )
