@@ -10,6 +10,7 @@ from vlm.configuration_vlm import VLMConfig
 class VLMForCausalLM(Gemma2ForCausalLM):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
         self.vit = AutoModel.from_pretrained("facebook/dinov2-base")
         self.num_patches = config.num_patches
@@ -21,6 +22,9 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         self.model.embed_tokens = torch.nn.Embedding(config.vocab_size, config.hidden_size, self.pad_token_id)
         with torch.no_grad():
             self.model.embed_tokens.weight[:config.vocab_size - 2, :] = old_embed_token.weight
+
+        self.model.to(self.device)
+        self.vit.to(self.device)
 
     def forward(
         self,
