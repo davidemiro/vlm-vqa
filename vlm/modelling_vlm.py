@@ -68,33 +68,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
 
-    def get_input_embeddings(self):
-        return self.model.get_input_embeddings()
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_input_embeddings with Llava->PaliGemma
-    def set_input_embeddings(self, value):
-        self.model.set_input_embeddings(value)
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_output_embeddings with Llava->PaliGemma
-    def get_output_embeddings(self):
-        return self.model.get_output_embeddings()
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_output_embeddings with Llava->PaliGemma
-    def set_output_embeddings(self, new_embeddings):
-        self.model.set_output_embeddings(new_embeddings)
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.set_decoder with Llava->PaliGemma
-    def set_decoder(self, decoder):
-        self.model.set_decoder(decoder)
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.get_decoder with Llava->PaliGemma
-    def get_decoder(self):
-        return self.model.get_decoder()
-
-    # Copied from transformers.models.llava.modeling_llava.LlavaForConditionalGeneration.tie_weights with Llava->PaliGemma
-    def tie_weights(self):
-        return self.model.tie_weights()
-
     def _update_causal_mask(
         self, attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training: bool = False
     ):
