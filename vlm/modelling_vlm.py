@@ -68,7 +68,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
 
-
     def get_input_embeddings(self):
         return self.model.get_input_embeddings()
 
@@ -236,7 +235,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         inputs_embeds = self.model.embed_tokens(input_ids)
 
         visual_mask = (input_ids == self.config.image_token_id)
-        inputs_embeds[visual_mask] = visual_embeds
+        inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
