@@ -20,7 +20,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         old_embed_token = self.model.embed_tokens
         self.model.embed_tokens = torch.nn.Embedding(config.vocab_size, config.hidden_size, self.pad_token_id)
         with torch.no_grad():
-            self.model.embed_tokens.weight[:config.vocab_size - 1, :] = old_embed_token.weight
+            self.model.embed_tokens.weight[:config.vocab_size - 2, :] = old_embed_token.weight
 
     def forward(
         self,
@@ -182,9 +182,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **lm_kwargs,
     ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
 
-        if (input_ids is None) ^ (inputs_embeds is not None):
-            raise ValueError("You must specify exactly one of input_ids or inputs_embeds")
-
         output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
         output_hidden_states = (
             output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
@@ -208,7 +205,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         inputs_embeds = self.model.embed_tokens(input_ids)
 
         visual_mask = (input_ids == self.config.image_token_id)
-        inputs_embeds.masked_scatter(visual_mask, visual_embeds)
+        inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
