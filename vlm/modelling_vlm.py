@@ -47,8 +47,7 @@ class VLMForCausalLM(Gemma2ForCausalLM):
         inputs_embeds = self.model.embed_tokens(input_ids)
 
         visual_mask = (input_ids == self.config.image_token_id)
-        inputs_embeds[visual_mask] = visual_embeds
-
+        inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         return super().forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 

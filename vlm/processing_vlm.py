@@ -20,8 +20,6 @@ class VLMProcessor(ProcessorMixin):
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors, return_token_type_ids=True)
 
-
-
         labels_mask = text_tokenized["input_ids"]
 
         labels_mask[text_tokenized["token_type_ids"] == 0] = -100

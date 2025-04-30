@@ -37,7 +37,6 @@ class BatchDataCollator(DefaultDataCollator):
             'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16).detach()
         }
 
-
     def _load_image(self, path, split, image_id):
         image_id = "0" * (12 - len(str(image_id))) + str(image_id)
         img = Image.open(os.path.join(path, "COCO_{}2014_{}.jpg".format(split, image_id)))
@@ -53,6 +52,7 @@ def get_vlm(config):
     vlm_model.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=vlm_config.vit_config, torch_dtype=torch.float16)
 
     return processor, vlm_model, vlm_config
+
 
 def get_vlm_generative(config):
     vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))

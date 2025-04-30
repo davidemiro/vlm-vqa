@@ -57,8 +57,6 @@ def main():
 
     data_collator_batch = BatchDataCollator(processor)
 
-
-
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
         evaluation_strategy="no",  # Evaluate at the end of each epoch
