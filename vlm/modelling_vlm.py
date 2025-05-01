@@ -12,8 +12,8 @@ class VLMForCausalLM(PreTrainedModel):
         super().__init__(config)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vision_transformer = AutoModel.from_pretrained("facebook/dinov2-base").to(device)
-        self.language_model = Gemma2ForCausalLM("google/gemma2-2b-it").to(device)
+        self.vision_transformer = AutoModel.from_pretrained("facebook/dinov2-base")
+        self.language_model = Gemma2ForCausalLM("google/gemma2-2b-it")
         self.num_patches = config.num_patches
 
         self.image_token_id = self.config.image_token_id
@@ -23,6 +23,10 @@ class VLMForCausalLM(PreTrainedModel):
         self.language_model.embed_tokens = torch.nn.Embedding(config.vocab_size, config.hidden_size, self.pad_token_id)
         with torch.no_grad():
             self.language_model.embed_tokens.weight[:config.vocab_size - 2, :] = old_embed_token.weight
+
+        self.language_model.to(device)
+        self.vision_transformer.to(device)
+        self.linear_projector.to(device)
 
     def forward(
         self,
