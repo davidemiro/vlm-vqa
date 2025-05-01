@@ -20,10 +20,10 @@ class VLMForCausalLM(PreTrainedModel):
         self.image_token_id = self.config.llm_config.image_token_id
         self.pad_token_id = self.config.llm_config.pad_token_id
 
-        old_embed_token = self.llm.embed_tokens
-        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size + 1, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
+        old_embed_token = self.llm.model.embed_tokens
+        self.llm.model.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size + 1, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
         with torch.no_grad():
-            self.llm.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
+            self.llm.model.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
 
         self.llm.to(device)
         self.vit.to(device)
@@ -51,7 +51,7 @@ class VLMForCausalLM(PreTrainedModel):
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
-        inputs_embeds = self.llm.embed_tokens(input_ids)
+        inputs_embeds = self.llm.model.embed_tokens(input_ids)
 
         visual_mask = (input_ids == self.config.llm_config.image_token_id)
         visual_mask = visual_mask.unsqueeze(-1)
@@ -202,7 +202,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
-        inputs_embeds = self.llm.embed_tokens(input_ids)
+        inputs_embeds = self.llm.model.embed_tokens(input_ids)
 
         visual_mask = (input_ids == self.config.llm_config.image_token_id)
         visual_mask = visual_mask.unsqueeze(-1)
