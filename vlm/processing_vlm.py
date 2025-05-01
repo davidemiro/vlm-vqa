@@ -11,8 +11,8 @@ class VLMProcessor(ProcessorMixin):
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', use_fast=True, token=token)
 
         self.num_patches = config.vit_config.num_patches
-        self.image_token = config.lm_config.image_token
-        self.context_length = config.lm_config.context_length
+        self.image_token = config.llm_config.image_token
+        self.context_length = config.llm_config.context_length
         self.chat_template = None
 
         self.tokenizer = self._vlm_tokenizer(self.tokenizer)
