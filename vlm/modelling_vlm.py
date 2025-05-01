@@ -18,12 +18,11 @@ class VLMForCausalLM(PreTrainedModel):
 
         self.image_token_id = self.config.llm_config.image_token_id
         self.pad_token_id = self.config.llm_config.pad_token_id
-        config.llm_config.vocab_size += 1
 
         old_embed_token = self.llm.embed_tokens
-        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
+        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size + 1, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
         with torch.no_grad():
-            self.llm.embed_tokens.weight[:config.llm_config.vocab_size - 1, :] = old_embed_token.weight
+            self.llm.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
 
         self.llm.to(device)
         self.vit.to(device)
@@ -218,8 +217,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         if position_ids is None:
             position_ids = cache_position.unsqueeze(0) + 1
-
-
 
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
