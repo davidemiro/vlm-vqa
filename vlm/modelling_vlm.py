@@ -236,15 +236,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **lm_kwargs,
         )
 
-        hidden_states = outputs[0]
-
-        slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
-        logits = self.llm.lm_head(hidden_states[:, slice_indices, :])
-        if self.config.final_logit_softcapping is not None:
-            logits = logits / self.config.final_logit_softcapping
-            logits = torch.tanh(logits)
-            logits = logits * self.config.final_logit_softcapping
-
+        logits = outputs.logits
         loss = None
         if labels is not None:
             # Upcast to float if we need to compute the loss to avoid potential precision issues
@@ -263,7 +255,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             # Flatten the tokens
             loss_fct = nn.CrossEntropyLoss()
 
-            flat_logits = shift_logits.view(-1, self.config.vocab_size)
+            flat_logits = shift_logits.view(-1, self.config.text_config.vocab_size)
             flat_labels = shift_labels.view(-1).to(shift_logits.device)
             loss = loss_fct(flat_logits, flat_labels)
 
@@ -273,9 +265,8 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             past_key_values=outputs.past_key_values,
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
-            image_hidden_states=visual_embeds if pixel_values is not None else None,
+            image_hidden_states=visual_embeds
         )
-
         return output if return_dict else output.to_tuple()
 
 
