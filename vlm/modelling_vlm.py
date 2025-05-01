@@ -199,15 +199,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         is_training = token_type_ids is not None and labels is not None
 
-        if cache_position is None:
-            past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
-            cache_position = torch.arange(
-                past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device
-            )
-
-        if position_ids is None:
-            position_ids = cache_position.unsqueeze(0) + 1
-
         visual_embeds = self.vit(pixel_values)
         visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
 
@@ -218,6 +209,17 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
 
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
+
+        if cache_position is None:
+            past_seen_tokens = past_key_values.get_seq_length() if past_key_values is not None else 0
+            cache_position = torch.arange(
+                past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device
+            )
+
+        if position_ids is None:
+            position_ids = cache_position.unsqueeze(0) + 1
+
+
 
         causal_mask = self._update_causal_mask(
             attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
