@@ -11,18 +11,19 @@ class VLMForCausalLM(PreTrainedModel):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.lm_config.hidden_size, dtype=config.lm_config.torch_dtype)
-        self.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=config.vit_config)
-        self.llm = Gemma2Model.from_pretrained("google/gemma-2-2b-it", config=config.lm_config)
+        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size, dtype=config.llm_config.torch_dtype)
+        self.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
+        self.llm = Gemma2Model.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
         self.num_patches = config.vit_config.num_patches
 
-        self.image_token_id = self.config.lm_config.image_token_id
-        self.pad_token_id = self.config.lm_config.pad_token_id
+        self.image_token_id = self.config.llm_config.image_token_id
+        self.pad_token_id = self.config.llm_config.pad_token_id
+        config.llm_config.vocab_size += 1
 
         old_embed_token = self.llm.embed_tokens
-        self.llm.embed_tokens = torch.nn.Embedding(config.lm_config.vocab_size, config.lm_config.hidden_size, self.pad_token_id)
+        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config)
         with torch.no_grad():
-            self.llm.embed_tokens.weight[:config.lm_config.vocab_size - 1, :] = old_embed_token.weight
+            self.llm.embed_tokens.weight[:config.llm_config.vocab_size - 1, :] = old_embed_token.weight
 
         self.llm.to(device)
         self.vit.to(device)
@@ -52,10 +53,12 @@ class VLMForCausalLM(PreTrainedModel):
 
         inputs_embeds = self.llm.embed_tokens(input_ids)
 
-        visual_mask = (input_ids == self.config.lm_config.image_token_id)
-        inputs_embeds.masked_scatter(visual_mask, visual_embeds)
+        visual_mask = (input_ids == self.config.llm_config.image_token_id)
+        visual_mask = visual_mask.unsqueeze(-1)
+        visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
+        inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
-        return self.llm.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+        return self.llm(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
 
 @dataclass
@@ -210,7 +213,10 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         inputs_embeds = self.llm.embed_tokens(input_ids)
 
-        visual_mask = (input_ids == self.config.lm_config.image_token_id)
+        visual_mask = (input_ids == self.config.llm_config.image_token_id)
+        visual_mask = visual_mask.unsqueeze(-1)
+        visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
+
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         causal_mask = self._update_causal_mask(
