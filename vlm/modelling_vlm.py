@@ -21,7 +21,7 @@ class VLMForCausalLM(PreTrainedModel):
         config.llm_config.vocab_size += 1
 
         old_embed_token = self.llm.embed_tokens
-        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config)
+        self.llm.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
         with torch.no_grad():
             self.llm.embed_tokens.weight[:config.llm_config.vocab_size - 1, :] = old_embed_token.weight
 
