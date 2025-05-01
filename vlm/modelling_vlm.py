@@ -8,21 +8,21 @@ from vlm.configuration_vlm import VLMConfig
 
 
 class VLMForCausalLM(PreTrainedModel):
-    def __init__(self, config: VLMConfig):
+    def __init__(self, config: VLMConfig, torch_dtype):
         super().__init__(config)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.linear_projector = nn.Linear(config.visual_embed_dim, config.hidden_size)
-        self.vision_transformer = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=torch.float16)
-        self.language_model = Gemma2ForCausalLM.from_pretrained("google/gemma2-2b-it", config=config.vit_config, torch_dtype=torch.float16)
-        self.num_patches = config.num_patches
+        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.lm_config.hidden_size, dtype=torch_dtype)
+        self.vision_transformer = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=torch_dtype)
+        self.language_model = Gemma2ForCausalLM.from_pretrained("google/gemma2-2b-it", config=config.lm_config, torch_dtype=torch_dtype)
+        self.num_patches = config.vit_config.num_patches
 
-        self.image_token_id = self.config.image_token_id
-        self.pad_token_id = self.config.pad_token_id
+        self.image_token_id = self.config.lm_config.image_token_id
+        self.pad_token_id = self.config.lm_config.pad_token_id
 
         old_embed_token = self.language_model.embed_tokens
-        self.language_model.embed_tokens = torch.nn.Embedding(config.vocab_size, config.hidden_size, self.pad_token_id)
+        self.language_model.embed_tokens = torch.nn.Embedding(config.lm_config.vocab_size, config.lm_config.hidden_size, self.pad_token_id)
         with torch.no_grad():
-            self.language_model.embed_tokens.weight[:config.vocab_size - 2, :] = old_embed_token.weight
+            self.language_model.embed_tokens.weight[:config.lm_config.vocab_size - 2, :] = old_embed_token.weight
 
         self.language_model.to(device)
         self.vision_transformer.to(device)
@@ -52,7 +52,7 @@ class VLMForCausalLM(PreTrainedModel):
 
         inputs_embeds = self.language_model.embed_tokens(input_ids)
 
-        visual_mask = (input_ids == self.config.image_token_id)
+        visual_mask = (input_ids == self.config.lm_config.image_token_id)
         inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         return self.language_model.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
@@ -72,7 +72,7 @@ class VLMCausalLMOutputWithPast(ModelOutput):
 class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
     def __init__(self, config: VLMConfig):
-        super().__init__(config)
+        super().__init__(config, )
 
     def _update_causal_mask(
         self, attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training: bool = False
@@ -139,7 +139,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
     ):
         # Overwritten -- custom `position_ids` and `pixel_values` handling
 
-        model_inputs = self.model.prepare_inputs_for_generation(
+        model_inputs = self.language_model.prepare_inputs_for_generation(
             input_ids,
             past_key_values=past_key_values,
             inputs_embeds=inputs_embeds,
@@ -210,7 +210,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
 
         inputs_embeds = self.language_model.embed_tokens(input_ids)
 
-        visual_mask = (input_ids == self.config.image_token_id)
+        visual_mask = (input_ids == self.config.lm_config.image_token_id)
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         causal_mask = self._update_causal_mask(
@@ -233,7 +233,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         hidden_states = outputs[0]
 
         slice_indices = slice(-logits_to_keep, None) if isinstance(logits_to_keep, int) else logits_to_keep
-        logits = self.lm_head(hidden_states[:, slice_indices, :])
+        logits = self.language_model.lm_head(hidden_states[:, slice_indices, :])
         if self.config.final_logit_softcapping is not None:
             logits = logits / self.config.final_logit_softcapping
             logits = torch.tanh(logits)

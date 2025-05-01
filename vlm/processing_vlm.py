@@ -2,21 +2,23 @@ from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer, Proce
 from vlm.configuration_vlm import VLMConfig
 import torch
 
-IMAGE_TOKEN = "<image>"
-
 
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
-        self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', token=token)
-        self.tokenizer = self._vlm_tokenizer(self.tokenizer)
+
         self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', use_fast=True, token=token)
-        self.context_length = config.context_length
+        self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', use_fast=True, token=token)
+
+        self.num_patches = config.vit_config.num_patches
+        self.image_token = config.lm_config.image_token
+        self.context_length = config.lm_config.context_length
         self.chat_template = None
-        self.num_patches = config.num_patches
+
+        self.tokenizer = self._vlm_tokenizer(self.tokenizer)
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
-        text = IMAGE_TOKEN * self.num_patches + text + label
+        text = self.image_token * self.num_patches + text + label
         text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors, return_token_type_ids=True)
 
@@ -33,7 +35,7 @@ class VLMProcessor(ProcessorMixin):
 
     def _inference_processing(self, text, image, return_tensors="pt"):
 
-        text = IMAGE_TOKEN * self.num_patches + text
+        text = self.image_token * self.num_patches + text
         text_tokenized = self.tokenizer(text, return_tensors=return_tensors)
 
         pixel_values = self.feature_extractor(images=image, return_tensors=return_tensors)['pixel_values']
@@ -60,9 +62,8 @@ class VLMProcessor(ProcessorMixin):
         else:
             return self._training_processing(text, image, label, return_tensors=return_tensors)
 
-    @staticmethod
-    def _vlm_tokenizer(tokenizer):
-        tokenizer.add_special_tokens({"additional_special_tokens": [IMAGE_TOKEN]})
+    def _vlm_tokenizer(self, tokenizer):
+        tokenizer.add_special_tokens({"additional_special_tokens": [self.image_token]})
         return tokenizer
 
 

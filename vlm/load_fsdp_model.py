@@ -26,7 +26,7 @@ def load_model_sharded(model, model_path):
 
 
 vlm_config = VLMConfig(text_length=32, num_patches=257, visual_embed_dim=768)
-vlm_model = VLMForCausalLM(vlm_config)
+vlm_model = VLMForCausalLM(vlm_config, )
 
 load_model_sharded(vlm_model, model_path)
 

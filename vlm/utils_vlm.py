@@ -47,7 +47,7 @@ def get_vlm(config):
 
     vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
     processor = VLMProcessor(vlm_config, config['token'])
-    vlm_model = VLMForCausalLM(config=vlm_config)
+    vlm_model = VLMForCausalLM(config=vlm_config, torch_dtype=)
 
     return processor, vlm_model, vlm_config
 
