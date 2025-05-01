@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Optional, Union, Tuple, List
 from torch import nn
 import torch
-from transformers import Gemma2ForCausalLM, PreTrainedModel, HybridCache, GenerationMixin, Cache, StaticCache, Dinov2Model
+from transformers import PreTrainedModel, HybridCache, GenerationMixin, Cache, StaticCache, \
+    AutoModelForCausalLM, AutoModel
 from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
 
@@ -12,8 +13,8 @@ class VLMForCausalLM(PreTrainedModel):
         super().__init__(config)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size, dtype=config.llm_config.torch_dtype)
-        self.vit = Dinov2Model.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
-        self.llm = Gemma2ForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
+        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
         self.num_patches = config.vit_config.num_patches
 
         self.image_token_id = self.config.llm_config.image_token_id
