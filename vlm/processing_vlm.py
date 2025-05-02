@@ -18,19 +18,17 @@ class VLMProcessor(ProcessorMixin):
         self.tokenizer = self._vlm_tokenizer(self.tokenizer)
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
-        text = self.image_token * self.num_patches + text + label
-        text_tokenized = self.tokenizer(text, truncation=True, padding="max_length", max_length=self.context_length,
+        text = self.image_token * self.num_patches + text
+        text_tokenized = self.tokenizer(text, text_pair=label, truncation=True, padding="max_length", max_length=self.context_length,
                                         return_tensors=return_tensors, return_token_type_ids=True)
 
-        labels_mask = text_tokenized["input_ids"]
-
-        labels_mask[text_tokenized["token_type_ids"] == 0] = -100
+        labels = text_tokenized["input_ids"].masked_fill(text_tokenized["token_type_ids"] == 0, -100)
 
         pixel_values = self.feature_extractor(images=image, return_tensors=return_tensors)['pixel_values']
 
         return {'input_ids': text_tokenized['input_ids'],
                 'attention_mask': text_tokenized['attention_mask'],
-                'labels': labels_mask,
+                'labels': labels,
                 'pixel_values': pixel_values}
 
     def _inference_processing(self, text, image, return_tensors="pt"):
