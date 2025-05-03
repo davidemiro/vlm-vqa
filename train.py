@@ -6,8 +6,7 @@ from configs.configs import to_bool
 from data.raw import get_dataset
 import torch
 from vlm.utils_vlm import BatchDataCollator, get_vlm
-
-
+import multiprocessing as mp
 
 
 def main():
@@ -97,6 +96,7 @@ def main():
 
 
 if __name__ == "__main__":
+    mp.set_start_method('spawn', force=True)
     main()
 
 
