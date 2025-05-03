@@ -5,7 +5,8 @@ downcast_bf16: 'no'
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_transformer_layer_cls_to_wrap:
-    - transformers.models.dinov2.modeling_dinov2.Dinov2Layer
+    - transformers.models.dinov2.modeling_dinov2.Dinov2Encoder
+    - transformers.models.gemma2.modeling_gemma2.Gemma2DecoderLayer
   fsdp_activation_checkpointing: false
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
   fsdp_backward_prefetch: BACKWARD_PRE
