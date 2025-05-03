@@ -17,7 +17,7 @@ class VLMForCausalLM(PreTrainedModel):
         self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
         print(self.llm.dtype)
         print(self.vit.dtype)
-        print(self.linear_projector.dtype)
+        print(self.linear_projector.type)
         self.num_patches = config.vit_config.num_patches
 
         self.image_token_id = self.config.llm_config.image_token_id
