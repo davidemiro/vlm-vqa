@@ -1,4 +1,4 @@
-from vlm.modelling_vlm import VLMForCausalLM
+from vlm.modeling_vlm import VLMForCausalLM
 from vlm.configuration_vlm import VLMConfig
 import os
 

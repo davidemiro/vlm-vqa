@@ -17,7 +17,7 @@ from helm.common.request import wrap_request_time
 from helm.clients.client import CachingClient, generate_uid_for_multimodal_prompt
 from helm.tokenizers.tokenizer import Tokenizer
 
-from vlm.modelling_vlm import VLMForConditionalGeneration, VLMForCausalLM
+from vlm.modeling_vlm import VLMForConditionalGeneration, VLMForCausalLM
 from vlm.processing_vlm import VLMProcessor
 from transformers import AutoTokenizer
 
