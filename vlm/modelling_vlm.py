@@ -25,7 +25,7 @@ class VLMForCausalLM(PreTrainedModel):
             self.llm.model.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
         del old_embed_token
 
-        self.llm.model.embed_tokens.requires_grad = False
+        self.llm.model.embed_tokens.weight.requires_grad = False
 
 
     def forward(
