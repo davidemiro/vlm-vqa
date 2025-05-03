@@ -56,7 +56,7 @@ class VLMForCausalLM(PreTrainedModel):
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         del visual_mask
-        del visual_mask
+        del visual_embeds
         del input_ids
 
         return self.llm.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
