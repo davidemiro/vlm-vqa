@@ -81,7 +81,7 @@ def main():
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
-        dataloader_num_workers=8,
+        dataloader_num_workers=1,
 
     )
 
