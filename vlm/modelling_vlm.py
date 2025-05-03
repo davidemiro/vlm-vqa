@@ -25,9 +25,6 @@ class VLMForCausalLM(PreTrainedModel):
         with torch.no_grad():
             self.llm.model.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
 
-        self.llm.to(device)
-        self.vit.to(device)
-        self.linear_projector.to(device)
 
     def forward(
         self,
