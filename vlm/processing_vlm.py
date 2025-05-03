@@ -17,8 +17,7 @@ class VLMProcessor(ProcessorMixin):
 
     def _training_processing(self, text, image, label, return_tensors="pt"):
         text = self.image_token * self.num_patches + text
-        text_tokenized = self.tokenizer(text, text_pair=label, truncation=True, padding="max_length", max_length=self.context_length,
-                                        return_tensors=return_tensors, return_token_type_ids=True)
+        text_tokenized = self.tokenizer(text, text_pair=label, return_tensors=return_tensors, return_token_type_ids=True)
 
         labels = text_tokenized["input_ids"].masked_fill(text_tokenized["token_type_ids"] == 0, -100)
 
