@@ -11,13 +11,9 @@ from vlm.configuration_vlm import VLMConfig
 class VLMForCausalLM(PreTrainedModel):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size, dtype=config.llm_config.torch_dtype)
-        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
-        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
-        print(self.llm.dtype)
-        print(self.vit.dtype)
-        print(self.linear_projector.type)
+        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config)
+        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config)
         self.num_patches = config.vit_config.num_patches
 
         self.image_token_id = self.config.llm_config.image_token_id
@@ -27,6 +23,7 @@ class VLMForCausalLM(PreTrainedModel):
         self.llm.model.embed_tokens = torch.nn.Embedding(config.llm_config.vocab_size + 1, config.llm_config.hidden_size, self.pad_token_id, dtype=config.llm_config.torch_dtype)
         with torch.no_grad():
             self.llm.model.embed_tokens.weight[:config.llm_config.vocab_size, :] = old_embed_token.weight
+        del old_embed_token
 
 
     def forward(
@@ -57,6 +54,10 @@ class VLMForCausalLM(PreTrainedModel):
         visual_mask = visual_mask.unsqueeze(-1)
         visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
+
+        del visual_mask
+        del visual_mask
+        del input_ids
 
         return self.llm.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
