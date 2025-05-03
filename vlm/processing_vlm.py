@@ -1,11 +1,9 @@
-from transformers import AutoProcessor, AutoImageProcessor, AutoTokenizer, ProcessorMixin
+from transformers import AutoImageProcessor, AutoTokenizer, ProcessorMixin
 from vlm.configuration_vlm import VLMConfig
-import torch
 
 
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
-
 
         self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', use_fast=True, token=token)
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', use_fast=True, token=token)

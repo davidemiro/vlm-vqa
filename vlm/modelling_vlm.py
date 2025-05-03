@@ -58,7 +58,7 @@ class VLMForCausalLM(PreTrainedModel):
         visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
-        return self.llm(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+        return self.llm.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
 
 
 @dataclass
@@ -141,7 +141,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             **kwargs,
     ):
         # Overwritten -- custom `position_ids` and `pixel_values` handling
-
         model_inputs = self.llm.prepare_inputs_for_generation(
             input_ids,
             past_key_values=past_key_values,
