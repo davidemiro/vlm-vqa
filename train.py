@@ -19,10 +19,12 @@ def main():
 
     fsdp_plugin = FullyShardedDataParallelPlugin(
         auto_wrap_policy = transformer_auto_wrap_policy,
-        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer]
+        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer, BatchDataCollator]
     )
 
     accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
+
+    print(accelerator.state.fsdp_plugin)
 
     torch.set_default_dtype(torch.float16)
 
