@@ -19,12 +19,12 @@ def main():
 
     fsdp_plugin = FullyShardedDataParallelPlugin(
         auto_wrap_policy = transformer_auto_wrap_policy,
-        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer, BatchDataCollator]
+        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer],
+        state_dict_config=FullStateDictConfig(offload_to_cpu=True, rank0_only=False),
+        optim_state_dict_config=FullOptimStateDictConfig(offload_to_cpu=True, rank0_only=False),
     )
 
     accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
-
-    print(accelerator.state.fsdp_plugin)
 
     torch.set_default_dtype(torch.float16)
 
@@ -98,6 +98,7 @@ def main():
         dataloader_num_workers=1,
 
     )
+
 
     trainer = Trainer(
         model=vlm_model,
