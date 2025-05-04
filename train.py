@@ -12,21 +12,11 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDic
 from transformers.models.dinov2.modeling_dinov2 import Dinov2Layer
 from transformers.models.gemma2.modeling_gemma2 import Gemma2DecoderLayer
 from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
+
 from accelerate import Accelerator
 
 
 def main():
-
-    fsdp_plugin = FullyShardedDataParallelPlugin(
-        auto_wrap_policy = transformer_auto_wrap_policy,
-        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer],
-        state_dict_config=FullStateDictConfig(offload_to_cpu=True, rank0_only=False),
-        optim_state_dict_config=FullOptimStateDictConfig(offload_to_cpu=True, rank0_only=False),
-    )
-
-    accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
-
-    torch.set_default_dtype(torch.float16)
 
     config = configs.load_configs()["TRAIN"]
 
@@ -96,6 +86,7 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
+        deepspeed="deepspeed/ds_config.json"
 
     )
 
