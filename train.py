@@ -28,6 +28,8 @@ def main():
         torch.cuda.set_device(int(config["local_rank"]))
         print(config["local_rank"])
 
+    """
+
     if to_bool(config["load_dataset"]):
 
         dataset_train = datasets.load_from_disk(config['local_train_path'])
@@ -45,6 +47,8 @@ def main():
 
         dataset_train.save_to_disk(config['local_train_path'])
         dataset_val.save_to_disk(config['local_val_path'])
+    
+    """
 
     processor, vlm_model, vlm_config = get_vlm(config)
     processor.push_to_hub(config["output_dir"])
