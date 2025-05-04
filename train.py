@@ -15,6 +15,10 @@ from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
 
 from accelerate import Accelerator
 
+from PIL import Image
+import requests
+import os
+
 
 def main():
 
@@ -46,6 +50,14 @@ def main():
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
 
+    url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
+    image = Image.open(requests.get(url, stream=True).raw)
+    x = processor("How many cats are in the picture?", image, "0", return_tensors="pt")
+
+    y = vlm_model(**x)
+
+    print(y)
+    return
     if to_bool(config["lora"]):
         lora_config = LoraConfig(
             r=int(config['lora_rank']),
