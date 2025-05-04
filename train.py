@@ -12,12 +12,17 @@ from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDic
 from transformers.models.dinov2.modeling_dinov2 import Dinov2Layer
 from transformers.models.gemma2.modeling_gemma2 import Gemma2DecoderLayer
 from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
-from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-import functools
 from accelerate import Accelerator
 
 
 def main():
+
+    fsdp_plugin = FullyShardedDataParallelPlugin(
+        auto_wrap_policy = transformer_auto_wrap_policy,
+        transformer_cls_names_to_wrap=[Gemma2DecoderLayer, Dinov2Layer]
+    )
+
+    accelerator = Accelerator(fsdp_plugin=fsdp_plugin)
 
     torch.set_default_dtype(torch.float16)
 
@@ -63,13 +68,6 @@ def main():
         vlm_model = lora_model
 
     data_collator_batch = BatchDataCollator(processor)
-
-    auto_wrap_policy = functools.partial(
-        transformer_auto_wrap_policy,
-        transformer_layer_cls={Gemma2DecoderLayer, Dinov2Layer}
-    )
-
-    vlm_model = FSDP(vlm_model, auto_wrap_policy=auto_wrap_policy)
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
