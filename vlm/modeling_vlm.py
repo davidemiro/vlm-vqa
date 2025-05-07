@@ -11,9 +11,9 @@ from vlm.configuration_vlm import VLMConfig
 class VLMForCausalLM(PreTrainedModel):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
-        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size)
-        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config)
-        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config)
+        self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size,dtype=config.llm_config.torch_dtype)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
+        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
         self.num_patches = config.vit_config.num_patches
 
         self.image_token_id = self.config.llm_config.image_token_id
@@ -61,7 +61,18 @@ class VLMForCausalLM(PreTrainedModel):
         del visual_embeds
         del input_ids
 
-        return self.llm.forward(None, attention_mask, position_ids, past_key_values, inputs_embeds, labels, use_cache, output_attentions, output_hidden_states, return_dict, cache_position, num_logits_to_keep)
+        return self.llm(None,
+                        attention_mask,
+                        position_ids,
+                        past_key_values,
+                        inputs_embeds,
+                        labels,
+                        use_cache,
+                        output_attentions,
+                        output_hidden_states,
+                        return_dict,
+                        cache_position,
+                        num_logits_to_keep)
 
 
 @dataclass

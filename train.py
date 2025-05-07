@@ -7,28 +7,17 @@ from data.raw import get_dataset
 import torch
 from vlm.utils_vlm import BatchDataCollator, get_vlm
 import multiprocessing as mp
-from accelerate import FullyShardedDataParallelPlugin
-from torch.distributed.fsdp.fully_sharded_data_parallel import FullOptimStateDictConfig, FullStateDictConfig
-from transformers.models.dinov2.modeling_dinov2 import Dinov2Layer
-from transformers.models.gemma2.modeling_gemma2 import Gemma2DecoderLayer
-from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
-
-from accelerate import Accelerator
-
-from PIL import Image
-import requests
-import os
 
 
 def main():
+
+    torch.set_default_dtype(torch.float16)
 
     config = configs.load_configs()["TRAIN"]
 
     if int(config["local_rank"]) != -1:
         torch.cuda.set_device(int(config["local_rank"]))
         print(config["local_rank"])
-
-    """
 
     if to_bool(config["load_dataset"]):
 
@@ -47,21 +36,11 @@ def main():
 
         dataset_train.save_to_disk(config['local_train_path'])
         dataset_val.save_to_disk(config['local_val_path'])
-    
-    """
 
     processor, vlm_model, vlm_config = get_vlm(config)
     processor.push_to_hub(config["output_dir"])
     vlm_config.push_to_hub(config["output_dir"])
 
-    url = 'http://images.cocodataset.org/val2017/000000039769.jpg'
-    image = Image.open(requests.get(url, stream=True).raw)
-    x = processor("How many cats are in the picture?", image, "0", return_tensors="pt")
-
-    y = vlm_model(**x)
-
-    print(y)
-    return
     if to_bool(config["lora"]):
         lora_config = LoraConfig(
             r=int(config['lora_rank']),
@@ -102,10 +81,8 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
-        deepspeed="deepspeed/ds_config.json"
 
     )
-
 
     trainer = Trainer(
         model=vlm_model,
