@@ -7,9 +7,9 @@ dynamo_config:
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: true
-  fsdp_auto_wrap_policy: SIZE_BASED_WRAP
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_transformer_layer_cls_to_wrap: Dinov2Layer,Gemma2DecoderLayer,Embedding,Gemma2MLP,Dinov2MLP,Gemma2RMSNorm
   fsdp_cpu_ram_efficient_loading: true
-  fsdp_min_num_params: 100000
   fsdp_offload_params: false
   fsdp_reshard_after_forward: false
   fsdp_state_dict_type: SHARDED_STATE_DICT
