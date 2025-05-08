@@ -7,7 +7,7 @@ dynamo_config:
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: true
-  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_auto_wrap_policy: NO_WRAP
   fsdp_backward_prefetch: NO_PREFETCH
   fsdp_cpu_ram_efficient_loading: true
   fsdp_forward_prefetch: false
@@ -15,7 +15,6 @@ fsdp_config:
   fsdp_reshard_after_forward: true
   fsdp_state_dict_type: SHARDED_STATE_DICT
   fsdp_sync_module_states: true
-  fsdp_transformer_layer_cls_to_wrap: Dinov2Layer,Gemma2DecoderLayer,Embedding,Gemma2MLP,Dinov2MLP,Gemma2RMSNorm
   fsdp_use_orig_params: true
   fsdp_version: 2
 machine_rank: 0
