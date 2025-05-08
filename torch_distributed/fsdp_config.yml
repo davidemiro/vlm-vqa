@@ -2,17 +2,19 @@ compute_environment: LOCAL_MACHINE
 debug: false
 distributed_type: FSDP
 downcast_bf16: 'no'
+dynamo_config:
+  dynamo_backend: EAGER
 enable_cpu_affinity: false
 fsdp_config:
-  fsdp_min_num_params: 2000
   fsdp_activation_checkpointing: true
   fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
-  fsdp_backward_prefetch: BACKWARD_PRE
+  fsdp_transformer_layer_cls_to_wrap: Dinov2Encoder, Gemma2DecoderLayer, Embedding
+  fsdp_backward_prefetch: NO_PREFETCH
   fsdp_cpu_ram_efficient_loading: true
   fsdp_forward_prefetch: false
   fsdp_offload_params: false
   fsdp_sharding_strategy: FULL_SHARD
-  fsdp_state_dict_type: SHARDED_STATE_DICT
+  fsdp_state_dict_type: FULL_STATE_DICT
   fsdp_sync_module_states: true
   fsdp_use_orig_params: true
 machine_rank: 0
