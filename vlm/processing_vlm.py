@@ -5,7 +5,7 @@ from vlm.configuration_vlm import VLMConfig
 class VLMProcessor(ProcessorMixin):
     def __init__(self, config: VLMConfig, token: str, **kwargs) -> None:
 
-        self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', use_fast=True, token=token)
+        self.feature_extractor = AutoImageProcessor.from_pretrained('facebook/dinov2-base', token=token)
         self.tokenizer = AutoTokenizer.from_pretrained('google/gemma-2-2b-it', use_fast=True, token=token)
 
         self.num_patches = config.vit_config.num_patches

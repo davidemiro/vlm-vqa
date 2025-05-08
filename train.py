@@ -58,7 +58,7 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        evaluation_strategy="no",  # Evaluate at the end of each epoch
+        eval_strategy="no",  # Evaluate at the end of each epoch
         save_strategy="steps",
         save_steps=5, #len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
         torch_empty_cache_steps=50,
