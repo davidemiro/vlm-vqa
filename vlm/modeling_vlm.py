@@ -12,8 +12,8 @@ class VLMForCausalLM(PreTrainedModel):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size,dtype=config.llm_config.torch_dtype)
-        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype)
-        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype)
+        self.vit = AutoModel.from_pretrained("facebook/dinov2-base", config=config.vit_config, torch_dtype=config.vit_config.torch_dtype, attn_implementation="eager")
+        self.llm = AutoModelForCausalLM.from_pretrained("google/gemma-2-2b-it", config=config.llm_config, torch_dtype=config.llm_config.torch_dtype, attn_implementation="eager")
         self.num_patches = config.vit_config.num_patches
 
         self.image_token_id = self.config.llm_config.image_token_id
