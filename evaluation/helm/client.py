@@ -165,8 +165,3 @@ class VLMClient(CachingClient):
             completions=completions,
             embedding=[],
         )
-
-
-vlm_config = VLMConfig(text_length=64, num_patches=257, visual_embed_dim=768)
-processor = VLMProcessor(vlm_config, "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")
-model = VLMForCausalLM(vlm_config).to("mps")
