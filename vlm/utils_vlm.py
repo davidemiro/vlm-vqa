@@ -5,7 +5,7 @@ import os
 
 from vlm.configuration_vlm import VLMConfig
 from vlm.processing_vlm import VLMProcessor
-from vlm.modeling_vlm import VLMForCausalLM, VLMForConditionalGeneration
+from vlm.modeling_vlm import VLMForCausalLM
 
 
 class BatchDataCollator(DefaultDataCollator):
