@@ -77,7 +77,7 @@ class VLMClient(CachingClient):
                 hlog(f"Loading model {checkpoint} and caching in memory...")
 
                 vlm_config = VLMConfig(text_length=64, num_patches=257, visual_embed_dim=768)
-                processor = VLMProcessor(vlm_config, "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")
+                processor = VLMProcessor(vlm_config, self.token)
                 model = VLMForCausalLM(vlm_config).to("mps")
                 """
                 config = AutoConfig.from_pretrained(checkpoint)
