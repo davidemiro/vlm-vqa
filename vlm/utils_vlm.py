@@ -20,6 +20,7 @@ class BatchDataCollator(DefaultDataCollator):
         attention_masks = []
         labels = []
         pixel_values = []
+        token_type_ids = []
 
         for row in batch:
             image = self._load_image(row['img_path'], row['split'], row['image_id'])
@@ -29,12 +30,16 @@ class BatchDataCollator(DefaultDataCollator):
             attention_masks.append(row_dict['attention_mask'])
             labels.append(row_dict['labels'])
             pixel_values.append(row_dict['pixel_values'])
+            token_type_ids.append(row_dict['token_type_ids'])
+
 
         return {
             'input_ids': torch.cat(input_ids, 0),
             'attention_mask': torch.cat(attention_masks, 0),
             'labels': torch.cat(labels, 0),
-            'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16)
+            'token_type_ids': torch.cat(pixel_values, 0),
+            'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16),
+
         }
 
     def _load_image(self, path, split, image_id):

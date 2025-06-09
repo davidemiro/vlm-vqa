@@ -28,7 +28,8 @@ class VLMProcessor(ProcessorMixin):
         return {'input_ids': text_tokenized['input_ids'],
                 'attention_mask': text_tokenized['attention_mask'],
                 'labels': labels,
-                'pixel_values': pixel_values}
+                'pixel_values': pixel_values,
+                'token_type_ids': text_tokenized['token_type_ids']}
 
     def _inference_processing(self, text, image, return_tensors="pt"):
 

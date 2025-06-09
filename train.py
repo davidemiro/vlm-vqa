@@ -22,20 +22,15 @@ def main():
     if to_bool(config["load_dataset"]):
 
         dataset_train = datasets.load_from_disk(config['local_train_path'])
-        dataset_val = datasets.load_from_disk(config['local_val_path'])
     else:
 
-        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], float(config['train_p']))
-        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'], float(config['val_p']))
-
+        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], config['prompt'], float(config['train_p']))
         dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
-        dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))
-
         dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] * len(dataset_train))
-        dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
+
+        print(dataset_train.loc[0, "question"])
 
         dataset_train.save_to_disk(config['local_train_path'])
-        dataset_val.save_to_disk(config['local_val_path'])
 
     processor, vlm_model, vlm_config = get_vlm(config)
     processor.push_to_hub(config["output_dir"])
@@ -60,7 +55,8 @@ def main():
         output_dir=config["output_dir"],
         eval_strategy="no",  # Evaluate at the end of each epoch
         save_strategy="steps",
-        save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
+        save_steps=10, #len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
+        save_only_model=True,
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),

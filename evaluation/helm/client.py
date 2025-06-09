@@ -17,9 +17,15 @@ from helm.common.request import wrap_request_time
 from helm.clients.client import CachingClient, generate_uid_for_multimodal_prompt
 from helm.tokenizers.tokenizer import Tokenizer
 
-from vlm.modeling_vlm import VLMForConditionalGeneration, VLMForCausalLM
+from vlm.configuration_vlm import VLMConfig
+from vlm.modeling_vlm import VLMForCausalLM
 from vlm.processing_vlm import VLMProcessor
 from transformers import AutoTokenizer
+
+
+import pydevd_pycharm
+pydevd_pycharm.settrace('localhost', port=1234, stdoutToServer=True, stderrToServer=True)
+
 
 try:
     from PIL import Image
@@ -31,19 +37,19 @@ torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
 
 
-class LoadedVLMForConditionalGeneration:
+class LoadedVLMForCausalLM:
     """Loaded model and processor for PaliGemma."""
 
-    model: VLMForConditionalGeneration
+    model: VLMForCausalLM
     processor: AutoProcessor
 
-    def __init__(self, model: VLMForConditionalGeneration, processor: AutoProcessor):
+    def __init__(self, model: VLMForCausalLM, processor: AutoProcessor):
         self.model = model
         self.processor = processor
 
 
 _models_lock: Lock = Lock()
-_models: Dict[str, Optional[VLMForConditionalGeneration]] = {}
+_models: Dict[str, Optional[VLMForCausalLM]] = {}
 
 
 class VLMClient(CachingClient):
@@ -58,10 +64,10 @@ class VLMClient(CachingClient):
         super().__init__(cache_config=cache_config)
         self.tokenizer = AutoTokenizer.from_pretrained("google/gemma-2-2b-it")
         self.tokenizer_name = tokenizer_name
-        self._device: str = get_torch_device_name()
+        self._device = "mps"
         self.token = token
 
-    def _get_model(self, checkpoint: str) -> LoadedVLMForConditionalGeneration:
+    def _get_model(self, checkpoint: str) -> LoadedVLMForCausalLM:
         global _models_lock
         global _models
 
@@ -69,13 +75,19 @@ class VLMClient(CachingClient):
         with _models_lock:
             if checkpoint not in _models or _models[checkpoint] is None:
                 hlog(f"Loading model {checkpoint} and caching in memory...")
+
+                vlm_config = VLMConfig(text_length=64, num_patches=257, visual_embed_dim=768)
+                processor = VLMProcessor(vlm_config, "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")
+                model = VLMForCausalLM(vlm_config).to("mps")
+                """
                 config = AutoConfig.from_pretrained(checkpoint)
                 processor = VLMProcessor(config, token=self.token)
                 model = VLMForConditionalGeneration.from_pretrained(
                     checkpoint, config=config, torch_dtype=torch.float16, device_map=self._device
                 ).eval()
+                """
 
-                _models[checkpoint] = LoadedVLMForConditionalGeneration(model, processor)
+                _models[checkpoint] = LoadedVLMForCausalLM(model, processor)
             loaded_model_processor = _models[checkpoint]
 
         assert loaded_model_processor is not None
@@ -89,18 +101,19 @@ class VLMClient(CachingClient):
         processor = loaded_model_processor.processor
         generation_args = {"max_new_tokens": request.max_tokens}
 
-        images: List[Image.Image] = []
+        images = None
         prompt_pieces: List[str] = []
         for media_object in request.multimodal_prompt.media_objects:
             if media_object.is_type("image") and media_object.location:
-                images += [open_image(media_object.location).convert("RGB")]
+                images = open_image(media_object.location).convert("RGB")
             elif media_object.is_type(TEXT_TYPE):
                 if media_object.text is None:
                     raise ValueError("MediaObject of text type has missing text field value")
                 prompt_pieces.append(media_object.text)
             else:
                 raise ValueError(f"Unrecognized MediaObject type {media_object.type}")
-        prompt_text: str = "\n".join(prompt_pieces)
+        prompt_text: str = "".join(prompt_pieces)
+
         model_inputs = processor(text=prompt_text, image=images, return_tensors="pt")
 
         input_len = model_inputs["input_ids"].shape[-1]
@@ -142,10 +155,7 @@ class VLMClient(CachingClient):
             for result in concat_results:
                 text = result["output"]
                 hlog(f"Generated text: {text}")
-                tokenization_result = self.tokenizer.tokenize(
-                    TokenizationRequest(text, tokenizer=self.tokenizer_name, encode=False)
-                )
-                tokens: List[Token] = [Token(text=str(text), logprob=0) for text in tokenization_result.raw_tokens]
+                tokens = self.tokenizer.tokenize(text)
                 completions.append(GeneratedOutput(text=text, logprob=0, tokens=tokens))
 
         return RequestResult(
@@ -155,3 +165,8 @@ class VLMClient(CachingClient):
             completions=completions,
             embedding=[],
         )
+
+
+vlm_config = VLMConfig(text_length=64, num_patches=257, visual_embed_dim=768)
+processor = VLMProcessor(vlm_config, "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")
+model = VLMForCausalLM(vlm_config).to("mps")

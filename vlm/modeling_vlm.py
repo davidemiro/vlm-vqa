@@ -8,7 +8,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast, ModelOutput
 from vlm.configuration_vlm import VLMConfig
 
 
-class VLMForCausalLM(PreTrainedModel):
+class VLMForCausalLM(PreTrainedModel, GenerationMixin):
     def __init__(self, config: VLMConfig):
         super().__init__(config)
         self.linear_projector = nn.Linear(config.vit_config.visual_embed_dim, config.llm_config.hidden_size,dtype=config.llm_config.torch_dtype)
@@ -28,79 +28,30 @@ class VLMForCausalLM(PreTrainedModel):
         self.llm.model.embed_tokens.weight.requires_grad = False
 
 
-    def forward(
-        self,
-        input_ids: torch.LongTensor = None,
-        attention_mask: Optional[torch.Tensor] = None,
-        position_ids: Optional[torch.LongTensor] = None,
-        past_key_values: Optional[HybridCache] = None,
-        inputs_embeds: Optional[torch.Tensor] = None,
-        text_embeds: Optional[torch.FloatTensor] = None,
-        pixel_values: Optional[torch.FloatTensor] = None,
-        labels: Optional[torch.LongTensor] = None,
-        use_cache: Optional[bool] = None,
-        output_attentions: Optional[bool] = None,
-        output_hidden_states: Optional[bool] = None,
-        return_dict: Optional[bool] = None,
-        cache_position: Optional[torch.LongTensor] = None,
-        num_logits_to_keep: int = 0,
-        **kwargs
-    ) -> Union[Tuple, CausalLMOutputWithPast]:
-
-        visual_embeds = self.vit(pixel_values)
-        visual_embeds = self.linear_projector(visual_embeds['last_hidden_state'])
-
-        inputs_embeds = self.llm.model.embed_tokens(input_ids)
-
-        visual_mask = (input_ids == self.config.llm_config.image_token_id)
-        visual_mask = visual_mask.unsqueeze(-1)
-        visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
-        inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
-
-        del visual_mask
-        del visual_embeds
-        del input_ids
-
-        return self.llm(None,
-                        attention_mask,
-                        position_ids,
-                        past_key_values,
-                        inputs_embeds,
-                        labels,
-                        use_cache,
-                        output_attentions,
-                        output_hidden_states,
-                        return_dict,
-                        cache_position,
-                        num_logits_to_keep)
-
-
-@dataclass
-class VLMCausalLMOutputWithPast(ModelOutput):
-
-    loss: Optional[torch.FloatTensor] = None
-    logits: torch.FloatTensor = None
-    past_key_values: Optional[Union[List[torch.FloatTensor], Cache]] = None
-    hidden_states: Optional[Tuple[torch.FloatTensor]] = None
-    attentions: Optional[Tuple[torch.FloatTensor]] = None
-    image_hidden_states: Optional[torch.FloatTensor] = None
-
-
-class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
-
-    def __init__(self, config: VLMConfig):
-        super().__init__(config, )
-
     def _update_causal_mask(
-        self, attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training: bool = False
+        self,
+        attention_mask,
+        token_type_ids=None,
+        past_key_values=None,
+        cache_position=None,
+        input_tensor=None,
+        is_training: Optional[bool] = None,
     ):
-
+        if self.config.llm_config._attn_implementation == "flash_attention_2":
+            if attention_mask is not None and 0.0 in attention_mask:
+                return attention_mask
+            return None
+        is_training = is_training if is_training is not None else self.training
         using_static_cache = isinstance(past_key_values, StaticCache)
-        dtype = inputs_embeds.dtype
-        min_dtype = torch.finfo(dtype).min
-        sequence_length = inputs_embeds.shape[1]
+        min_dtype = torch.finfo(self.dtype).min
+        if input_tensor is None:
+            input_tensor = attention_mask
+
+        inputs_lead_dim, sequence_length = input_tensor.shape[:2]
         if using_static_cache:
-            target_length = past_key_values.get_max_length()
+            target_length = past_key_values.get_max_cache_shape()
+        elif isinstance(past_key_values, HybridCache):
+            target_length = past_key_values.get_max_cache_shape()
         else:
             target_length = (
                 attention_mask.shape[-1]
@@ -113,7 +64,7 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             return attention_mask
 
         causal_mask = torch.full(
-            (sequence_length, target_length), fill_value=min_dtype, dtype=dtype, device=cache_position.device
+            (sequence_length, target_length), fill_value=min_dtype, dtype=self.dtype, device=cache_position.device
         )
         # Causal diagonal mask only if training, otherwise attend to the whole prefix. Training-specific attn for prefix is handled below
         if sequence_length != 1:
@@ -123,92 +74,49 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
                 causal_mask[:, :sequence_length] = 0.0
 
         causal_mask *= torch.arange(target_length, device=cache_position.device) > cache_position.reshape(-1, 1)
-        causal_mask = causal_mask[None, None, :, :].expand(inputs_embeds.shape[0], 1, -1, -1)
+        causal_mask = causal_mask[None, None, :, :].expand(inputs_lead_dim, 1, -1, -1)
         if attention_mask is not None:
             causal_mask = causal_mask.clone()  # copy to contiguous memory for in-place edit
             mask_length = attention_mask.shape[-1]
+
+            # First unmask prefix tokens during training
+            if is_training:
+                if token_type_ids is None:
+                    raise ValueError("Token type ids must be provided during training")
+                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
+                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
+                )
+
+            # Then apply padding mask (will mask pad tokens)
             padding_mask = causal_mask[:, :, :, :mask_length] + attention_mask[:, None, None, :].to(causal_mask.device)
             padding_mask = padding_mask == 0
             causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
                 padding_mask, min_dtype
             )
-            # we are training thus we need to create a full mask on the image + prefix but causal on suffix
-            if is_training:
-                causal_mask[:, :, :, :mask_length] = causal_mask[:, :, :, :mask_length].masked_fill(
-                    token_type_ids[:, None, None, :].to(causal_mask.device) == 0, 0
-                )
+
         return causal_mask
 
-    def prepare_inputs_for_generation(
-            self,
-            input_ids,
-            past_key_values=None,
-            inputs_embeds=None,
-            cache_position=None,
-            position_ids=None,
-            pixel_values=None,
-            attention_mask=None,
-            token_type_ids=None,
-            use_cache=True,
-            logits_to_keep=None,
-            labels=None,
-            **kwargs,
-    ):
-        # Overwritten -- custom `position_ids` and `pixel_values` handling
-        model_inputs = self.llm.prepare_inputs_for_generation(
-            input_ids,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            attention_mask=attention_mask,
-            position_ids=position_ids,
-            cache_position=cache_position,
-            use_cache=use_cache,
-            logits_to_keep=logits_to_keep,
-            token_type_ids=token_type_ids,
-            **kwargs,
-        )
 
-        # position_ids in Paligemma are 1-indexed
-        if model_inputs.get("position_ids") is not None:
-            model_inputs["position_ids"] += 1
-        # If we're in cached decoding stage, pixel values should be None because input ids do not contain special image token anymore
-        # Otherwise we need pixel values to be passed to model. NOTE: use_cache=False needs pixel_values always
-        if cache_position[0] == 0:
-            model_inputs["pixel_values"] = pixel_values
-        is_training = token_type_ids is not None and labels is not None
-        if cache_position[0] == 0 and isinstance(past_key_values, HybridCache):
-            input_tensor = inputs_embeds if inputs_embeds is not None else input_ids
-            causal_mask = self._update_causal_mask(
-                attention_mask, token_type_ids, past_key_values, cache_position, input_tensor, is_training
-            )
-            model_inputs["attention_mask"] = causal_mask
-
-        return model_inputs
 
     def forward(
-            self,
-            input_ids: Optional[torch.LongTensor] = None,
-            pixel_values: Optional[torch.FloatTensor] = None,
-            attention_mask: Optional[torch.Tensor] = None,
-            position_ids: Optional[torch.LongTensor] = None,
-            past_key_values: Optional[Union[List[torch.FloatTensor], Cache]] = None,
-            token_type_ids: Optional[torch.LongTensor] = None,
-            cache_position: Optional[torch.LongTensor] = None,
-            inputs_embeds: Optional[torch.FloatTensor] = None,
-            labels: Optional[torch.LongTensor] = None,
-            use_cache: Optional[bool] = None,
-            output_attentions: Optional[bool] = None,
-            output_hidden_states: Optional[bool] = None,
-            return_dict: Optional[bool] = None,
-            logits_to_keep: Union[int, torch.Tensor] = 0,
-            **lm_kwargs,
-    ) -> Union[Tuple, VLMCausalLMOutputWithPast]:
-
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        self,
+        input_ids: torch.LongTensor = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[HybridCache] = None,
+        inputs_embeds: Optional[torch.Tensor] = None,
+        text_embeds: Optional[torch.FloatTensor] = None,
+        pixel_values: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        token_type_ids: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+        num_logits_to_keep: int = 0,
+        **kwargs
+    ) -> Union[Tuple, CausalLMOutputWithPast]:
 
         is_training = token_type_ids is not None and labels is not None
 
@@ -220,7 +128,6 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
         visual_mask = (input_ids == self.config.llm_config.image_token_id)
         visual_mask = visual_mask.unsqueeze(-1)
         visual_mask = visual_mask.repeat(1, 1, self.config.llm_config.hidden_size)
-
         inputs_embeds = inputs_embeds.masked_scatter(visual_mask, visual_embeds)
 
         if cache_position is None:
@@ -229,27 +136,29 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
                 past_seen_tokens, past_seen_tokens + inputs_embeds.shape[1], device=inputs_embeds.device
             )
 
-        if position_ids is None:
-            position_ids = cache_position.unsqueeze(0) + 1
+        del visual_mask
+        del visual_embeds
+        del input_ids
 
         causal_mask = self._update_causal_mask(
-            attention_mask, token_type_ids, inputs_embeds, past_key_values, cache_position, is_training
+            attention_mask, token_type_ids, past_key_values, cache_position, inputs_embeds, is_training
         )
 
-        outputs = self.llm(
-            input_ids=None,
-            attention_mask=causal_mask,
-            position_ids=position_ids,
-            past_key_values=past_key_values,
-            inputs_embeds=inputs_embeds,
-            use_cache=use_cache,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            cache_position=cache_position,
-            **lm_kwargs,
-        )
+        outputs = self.llm(None,
+                        causal_mask,
+                        position_ids,
+                        past_key_values,
+                        inputs_embeds,
+                        labels,
+                        use_cache,
+                        output_attentions,
+                        output_hidden_states,
+                        return_dict,
+                        cache_position,
+                        num_logits_to_keep)
 
         logits = outputs.logits
+
         loss = None
         if labels is not None:
             # Upcast to float if we need to compute the loss to avoid potential precision issues
@@ -268,18 +177,23 @@ class VLMForConditionalGeneration(VLMForCausalLM, GenerationMixin):
             # Flatten the tokens
             loss_fct = nn.CrossEntropyLoss()
 
-            flat_logits = shift_logits.view(-1, self.config.text_config.vocab_size)
+            flat_logits = shift_logits.view(-1, self.config.llm_config.vocab_size)
             flat_labels = shift_labels.view(-1).to(shift_logits.device)
             loss = loss_fct(flat_logits, flat_labels)
 
-        output = VLMCausalLMOutputWithPast(
-            loss=loss,
-            logits=logits,
-            past_key_values=outputs.past_key_values,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
-            image_hidden_states=visual_embeds
-        )
-        return output if return_dict else output.to_tuple()
+        outputs.loss = loss
+
+        return outputs
+
+
+@dataclass
+class VLMCausalLMOutputWithPast(ModelOutput):
+
+    loss: Optional[torch.FloatTensor] = None
+    logits: torch.FloatTensor = None
+    past_key_values: Optional[Union[List[torch.FloatTensor], Cache]] = None
+    hidden_states: Optional[Tuple[torch.FloatTensor]] = None
+    attentions: Optional[Tuple[torch.FloatTensor]] = None
+    image_hidden_states: Optional[torch.FloatTensor] = None
 
 
