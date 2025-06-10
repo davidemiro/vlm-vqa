@@ -31,8 +31,6 @@ def main():
         dataset_train.save_to_disk(config['local_train_path'])
 
     processor, vlm_model, vlm_config = get_vlm(config)
-    processor.push_to_hub(config["output_dir"])
-    vlm_config.push_to_hub(config["output_dir"])
 
     if to_bool(config["lora"]):
         lora_config = LoraConfig(

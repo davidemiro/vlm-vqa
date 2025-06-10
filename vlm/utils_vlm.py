@@ -55,12 +55,3 @@ def get_vlm(config):
     vlm_model = VLMForCausalLM(config=vlm_config)
 
     return processor, vlm_model, vlm_config
-
-
-def get_vlm_generative(config):
-    vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
-    processor = VLMProcessor(vlm_config, config['token'])
-
-    vlm_generative = VLMForConditionalGeneration(vlm_config)
-
-    return processor, vlm_generative
