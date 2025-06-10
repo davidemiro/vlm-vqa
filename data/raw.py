@@ -20,6 +20,9 @@ def get_dataset(annotations_path, questions_path, prompt, p):
 
     dataset = pandas.merge(questions, annotations, on="question_id")
     dataset['question'] = dataset['question'].apply(lambda x: prompt.format(x))
+
+    print(dataset.loc[0, "question"])
+
     dataset = datasets.Dataset.from_pandas(dataset)
     dataset = dataset.shuffle()
 
