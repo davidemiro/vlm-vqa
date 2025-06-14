@@ -11,9 +11,7 @@ import multiprocessing as mp
 
 def main():
 
-
-
-    torch.set_default_dtype(torch.float32)
+    torch.set_default_dtype(torch.float16)
 
     config = configs.load_configs()["TRAIN"]
 
@@ -34,7 +32,6 @@ def main():
 
     processor, vlm_model, vlm_config = get_vlm(config)
 
-
     if to_bool(config["lora"]):
         lora_config = LoraConfig(
             r=int(config['lora_rank']),
@@ -50,8 +47,6 @@ def main():
         vlm_model = lora_model
 
     data_collator_batch = BatchDataCollator(processor)
-
-    vlm_model.to("mps")
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
@@ -72,7 +67,7 @@ def main():
         logging_steps=1,
         logging_dir="./logs",
         save_total_limit=1,
-        fp16=False,
+        fp16=True,
         fp16_full_eval=True,
         ddp_find_unused_parameters=False,
         eval_accumulation_steps=int(config["eval_accumulation_steps"]),
