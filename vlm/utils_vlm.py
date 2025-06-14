@@ -37,8 +37,8 @@ class BatchDataCollator(DefaultDataCollator):
             'input_ids': torch.cat(input_ids, 0),
             'attention_mask': torch.cat(attention_masks, 0),
             'labels': torch.cat(labels, 0),
-            'token_type_ids': torch.cat(pixel_values, 0),
-            'pixel_values': torch.cat(pixel_values, 0).to(dtype=torch.float16),
+            'token_type_ids': torch.cat(token_type_ids, 0),
+            'pixel_values': torch.cat(pixel_values, 0),
 
         }
 
