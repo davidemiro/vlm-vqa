@@ -52,8 +52,7 @@ def main():
         output_dir=config["output_dir"],
         eval_strategy="no",  # Evaluate at the end of each epoch
         save_strategy="steps",
-        save_steps=10, #len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
-        save_only_model=True,
+        save_steps=1, #len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
