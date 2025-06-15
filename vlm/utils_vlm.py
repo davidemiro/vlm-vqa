@@ -50,7 +50,7 @@ class BatchDataCollator(DefaultDataCollator):
 
 def get_vlm(config):
 
-    vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]))
+    vlm_config = VLMConfig(text_length=int(config["text_length"]), num_patches=int(config["num_patches"]), visual_embed_dim=int(config["visual_embed_dim"]),torch_dtype=torch.float16, dropout=float(config["dropout"]))
     processor = VLMProcessor(vlm_config, config['token'])
     vlm_model = VLMForCausalLM(config=vlm_config)
 

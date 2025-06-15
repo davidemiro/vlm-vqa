@@ -22,13 +22,20 @@ def main():
     if to_bool(config["load_dataset"]):
 
         dataset_train = datasets.load_from_disk(config['local_train_path'])
+        dataset_val = datasets.load_from_disk(config['local_val_path'])
     else:
 
-        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], config['prompt'], float(config['train_p']))
+        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], float(config['train_p']))
+        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'], float(config['val_p']))
+
         dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
+        dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))
+
         dataset_train = dataset_train.add_column("img_path", [config['train_img_path']] * len(dataset_train))
+        dataset_val = dataset_val.add_column("img_path", [config['val_img_path']] * len(dataset_val))
 
         dataset_train.save_to_disk(config['local_train_path'])
+        dataset_val.save_to_disk(config['local_val_path'])
 
     processor, vlm_model, vlm_config = get_vlm(config)
 
@@ -50,12 +57,16 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=config["output_dir"],
-        eval_strategy="no",  # Evaluate at the end of each epoch
+        eval_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
         save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
+        eval_steps=50,
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
+        lr_scheduler_type=config["lr_scheduler_type"],
+        warmup_ratio=float(config["warmup_ratio"]),
+        max_grad_norm=float(config["max_grad_norm"]),
         per_device_train_batch_size=int(config["batch_size"]),
         per_device_eval_batch_size=int(config["eval_batch_size"]),
         num_train_epochs=int(config["num_train_epochs"]),
@@ -73,6 +84,10 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
+        optim_args={
+            "percentile_clipping": int(config["percentile_clipping"]),
+            "block_wise": to_bool(config["block_wise"]),
+        }
 
     )
 
@@ -80,7 +95,7 @@ def main():
         model=vlm_model,
         args=training_args,
         train_dataset=dataset_train,
-        eval_dataset=dataset_train,
+        eval_dataset=dataset_val,
         data_collator=data_collator_batch,
     )
 
