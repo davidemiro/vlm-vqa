@@ -84,7 +84,7 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
-        optim_args= "percentile_clipping={}, block_wise={}".format(config["percentile_clipping"],config["block_wise"])
+        optim_args= "percentile_clipping=95, block_wise=True"
     )
 
     trainer = Trainer(
