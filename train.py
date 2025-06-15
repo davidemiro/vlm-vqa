@@ -70,7 +70,7 @@ def main():
         per_device_train_batch_size=int(config["batch_size"]),
         per_device_eval_batch_size=int(config["eval_batch_size"]),
         num_train_epochs=int(config["num_train_epochs"]),
-        optim=config["optimizer"],
+        optim=config["optim"],
         push_to_hub=False,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
