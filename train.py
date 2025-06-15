@@ -25,8 +25,8 @@ def main():
         dataset_val = datasets.load_from_disk(config['local_val_path'])
     else:
 
-        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], float(config['train_p']))
-        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'], float(config['val_p']))
+        dataset_train = get_dataset(config['train_annotations_path'], config['train_questions_path'], config['prompt'], float(config['train_p']))
+        dataset_val = get_dataset(config['val_annotations_path'], config['val_questions_path'], config['prompt'], float(config['val_p']))
 
         dataset_train = dataset_train.add_column("split", ["train"] * len(dataset_train))
         dataset_val = dataset_val.add_column("split", ["val"] * len(dataset_val))
@@ -60,7 +60,7 @@ def main():
         eval_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
         save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
-        eval_steps=50,
+        eval_steps=100,
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
@@ -70,7 +70,7 @@ def main():
         per_device_train_batch_size=int(config["batch_size"]),
         per_device_eval_batch_size=int(config["eval_batch_size"]),
         num_train_epochs=int(config["num_train_epochs"]),
-        optim=config["optim"],
+        optim=config["optimizer"],
         push_to_hub=False,
         remove_unused_columns=False,
         dataloader_pin_memory=True,
@@ -84,11 +84,7 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
-        optim_args={
-            "percentile_clipping": int(config["percentile_clipping"]),
-            "block_wise": to_bool(config["block_wise"]),
-        }
-
+        optim_args= "percentile_clipping={}, block_wise={}".format(config["percentile_clipping"],config["block_wise"])
     )
 
     trainer = Trainer(
@@ -100,6 +96,12 @@ def main():
     )
 
     trainer.train()
+    loss_values = trainer.state.log_history
+
+    # Save to a JSON or CSV
+    import json
+    with open("loss_log.json", "w") as f:
+        json.dump(loss_values, f, indent=2)
 
 
 if __name__ == "__main__":
