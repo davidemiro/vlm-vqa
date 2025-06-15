@@ -60,7 +60,7 @@ def main():
         eval_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
         save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
-        eval_steps=100,
+        eval_steps=10,
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),
         weight_decay=float(config["weight_decay"]),
@@ -84,7 +84,7 @@ def main():
         gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
         batch_eval_metrics=True,
         dataloader_num_workers=1,
-        optim_args= "percentile_clipping=95, block_wise=True"
+        optim_args= "percentile_clipping={}, block_wise={}".format(config["percentile_clipping"],config["block_wise"])
     )
 
     trainer = Trainer(
