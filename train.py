@@ -5,6 +5,8 @@ from configs import configs
 from configs.configs import to_bool
 from data.raw import get_dataset
 import torch
+
+from vlm.modeling_vlm import VLMForCausalLM
 from vlm.utils_vlm import BatchDataCollator, get_vlm
 import multiprocessing as mp
 
@@ -59,7 +61,7 @@ def main():
         output_dir=config["output_dir"],
         eval_strategy="steps",  # Evaluate at the end of each epoch
         save_strategy="steps",
-        save_steps=len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
+        save_steps=1, # len(dataset_train) // (int(config['batch_size']) * int(config['gradient_accumulation_steps']) * int(config['num_gpu'])),
         eval_steps=10,
         torch_empty_cache_steps=50,
         learning_rate=float(config["learning_rate"]),

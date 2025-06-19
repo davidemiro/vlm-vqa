@@ -2,8 +2,6 @@ compute_environment: LOCAL_MACHINE
 debug: false
 distributed_type: FSDP
 downcast_bf16: 'no'
-dynamo_config:
-  dynamo_backend: EAGER
 enable_cpu_affinity: false
 fsdp_config:
   fsdp_activation_checkpointing: true
