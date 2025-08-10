@@ -5,7 +5,7 @@
 This repo contains the implementation of a **Visual Language Model for Visual Question Answering (VLM-VQA)**.
 It proposes the combination of **DINOv2** as vision encoder **and Gemma 2 (2B)** as language model, following the idea outlined in the research paper "PaliGemma: A versatile 3B VLM for transfer."
 The model has been trained specifically for the Visual Question Answering task, demostrating competitive performance.
-Since the 
+Moreover the implementation, in this repo you can find the code for the **multi-GPU** training with **deepspeed** and pytorch **Distributed Data Parallel (DDP)** and **Fully Shard Data Parallel (FSDP)**
 
 
 ## Architecture
@@ -45,10 +45,17 @@ The model has been trained using the tool **Trainer** of **Hugging Face** **Tran
 
 ### Fully Shard Data Parallel
 
-This model was trained in a **multi-GPU** environment using **Fully Sharded Data Parallel (FSDP)**.  
-FSDP shards model parameters, optimizer states, and gradients across all GPUs, increasing effective memory availability and preventing *Out Of Memory (OOM)* errors when training large models.
+This model was trained in a **multi-GPU** environment using **Fully Sharded Data Parallel (FSDP)** with **Hugging Face** **Accelerate**.
+Specifically, it has been used ** 4 x NVIDIA A10G **.
+FSDP shards model parameters, optimizer states and gradients across all GPUs. It has been adopted the **TRANSFORMER_BASED_WRAP** that allows to select the layers to shard.
+If you want to train the model you can use the following command:
+
+```bash accelerate launch \ --config_file torch_distributed/fsdp2_config.yml \ train.py \ --token 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 \ --configs torch_distributed/fsdp_configs.ini ``` 
 
 
 ## Evaluation
+
+The model has been evaluated with **Holistic Evaluation of Language Models (HELM)**.
+It has been evaluated on 1K instances of VQAv2 HELM benchmark reaching a **0.5 BLEU score**.
 
 
