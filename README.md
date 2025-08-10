@@ -50,7 +50,7 @@ Specifically, it has been used ** 4 x NVIDIA A10G **.
 FSDP shards model parameters, optimizer states and gradients across all GPUs. It has been adopted the **TRANSFORMER_BASED_WRAP** that allows to select the layers to shard.
 If you want to train the model you can use the following command:
 
-```bash accelerate launch \ --config_file torch_distributed/fsdp2_config.yml \ train.py \ --token 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 \ --configs torch_distributed/fsdp_configs.ini ``` 
+```bash accelerate launch \ --config_file torch_distributed/fsdp2_config.yml \ train.py \ --token <hf_token> \ --configs torch_distributed/fsdp_configs.ini ``` 
 
 
 ## Evaluation
