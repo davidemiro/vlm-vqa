@@ -65,7 +65,7 @@ Training uses the **Trainer** API from the Hugging Face **Transformers** library
 accelerate launch \
   --config_file torch_distributed/fsdp2_config.yml \
   train.py \
-  --token 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 \
+  --token <your_hf_token> \
   --configs torch_distributed/fsdp_configs.ini
 ```
 
