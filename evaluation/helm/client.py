@@ -2,29 +2,29 @@ from threading import Lock
 from typing import Any, Dict, List, Optional
 
 import torch
-from dataclasses import dataclass
-from transformers import AutoProcessor, AutoConfig
+from transformers import AutoProcessor
 
 from helm.common.cache import CacheConfig
 from helm.common.images_utils import open_image
-from helm.common.gpu_utils import get_torch_device_name
 from helm.common.hierarchical_logger import hlog, htrack_block
 from helm.common.media_object import TEXT_TYPE
 from helm.common.optional_dependencies import handle_module_not_found_error
-from helm.common.request import Request, RequestResult, GeneratedOutput, Token
-from helm.common.tokenization_request import TokenizationRequest
-from helm.common.request import wrap_request_time
+from helm.common.request import Request, RequestResult, GeneratedOutput, Token, wrap_request_time
 from helm.clients.client import CachingClient, generate_uid_for_multimodal_prompt
 from helm.tokenizers.tokenizer import Tokenizer
+
 
 from vlm.configuration_vlm import VLMConfig
 from vlm.modeling_vlm import VLMForCausalLM
 from vlm.processing_vlm import VLMProcessor
 from transformers import AutoTokenizer
+from vlm.load_fsdp_model import load_model
 
 
 import pydevd_pycharm
 pydevd_pycharm.settrace('localhost', port=1234, stdoutToServer=True, stderrToServer=True)
+
+
 
 
 try:
@@ -76,16 +76,12 @@ class VLMClient(CachingClient):
             if checkpoint not in _models or _models[checkpoint] is None:
                 hlog(f"Loading model {checkpoint} and caching in memory...")
 
+                fsdp_path = ""
+
                 vlm_config = VLMConfig(text_length=64, num_patches=257, visual_embed_dim=768)
-                processor = VLMProcessor(vlm_config, self.token)
-                model = VLMForCausalLM(vlm_config).to("mps")
-                """
-                config = AutoConfig.from_pretrained(checkpoint)
-                processor = VLMProcessor(config, token=self.token)
-                model = VLMForConditionalGeneration.from_pretrained(
-                    checkpoint, config=config, torch_dtype=torch.float16, device_map=self._device
-                ).eval()
-                """
+                processor = VLMProcessor(vlm_config, token=self.token)
+                model = load_model(fsdp_path).eval()
+                model = model.to(self._device)
 
                 _models[checkpoint] = LoadedVLMForCausalLM(model, processor)
             loaded_model_processor = _models[checkpoint]
@@ -99,7 +95,7 @@ class VLMClient(CachingClient):
         loaded_model_processor = self._get_model(request.model_deployment)
         model = loaded_model_processor.model
         processor = loaded_model_processor.processor
-        generation_args = {"max_new_tokens": request.max_tokens}
+
 
         images = None
         prompt_pieces: List[str] = []
@@ -121,20 +117,28 @@ class VLMClient(CachingClient):
         model_inputs = {k: v.to(self._device) for k, v in model_inputs.items()}
 
         completions: List[GeneratedOutput] = []
-        with htrack_block(f"Generating for prompt: {prompt_text}"):
+        with htrack_block(f""):
             try:
                 concat_results = []
                 for i_completion in range(request.num_completions):
 
                     def do_it() -> Dict[str, Any]:
-                        with torch.inference_mode():
+
+                        with torch.no_grad():
+
                             generation = model.generate(
-                                **model_inputs, max_new_tokens=request.max_tokens, do_sample=False, use_cache=False
+                                **model_inputs, do_sample=False, use_cache=False
                             )[0]
                             if not request.echo_prompt:
                                 generation = generation[input_len:]
-                            decoded = self.tokenizer.decode(generation, skip_special_tokens=True)
-                            return {"output": decoded}
+
+
+                            decoded = self.tokenizer.decode(generation)
+                            decoded = decoded[:decoded.index("<eos>")]
+                            decoded = decoded.replace("<bos>","").replace("<eos>","")
+
+                            del generation
+                            return {"output": decoded, "prompt": prompt_text}
 
                     # Include the prompt and model name in the cache key
                     cache_key = CachingClient.make_cache_key(
@@ -143,21 +147,25 @@ class VLMClient(CachingClient):
                             "i": i_completion,
                             "model": request.model,
                             "prompt": generate_uid_for_multimodal_prompt(request.multimodal_prompt),
-                            **generation_args,
                         },
                         request=request,
                     )
                     result, cached = self.cache.get(cache_key, wrap_request_time(do_it))
                     concat_results.append(result)
+
             except RuntimeError as model_error:
                 return RequestResult(success=False, cached=False, error=str(model_error), completions=[], embedding=[])
 
             for result in concat_results:
                 text = result["output"]
+                hlog(f"Prompt: {result['prompt']}")
                 hlog(f"Generated text: {text}")
-                tokens = self.tokenizer.tokenize(text)
+                raw_tokens = self.tokenizer.tokenize(text)
+                tokens = [ Token(text=raw_token, logprob=0) for raw_token in raw_tokens ]
                 completions.append(GeneratedOutput(text=text, logprob=0, tokens=tokens))
 
+
+        del model_inputs
         return RequestResult(
             success=True,
             cached=cached,

@@ -153,7 +153,6 @@ class VLMForCausalLM(PreTrainedModel, GenerationMixin):
                         use_cache,
                         output_attentions,
                         output_hidden_states,
-                        return_dict,
                         cache_position,
                         num_logits_to_keep)
 
