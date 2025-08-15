@@ -1,5 +1,7 @@
 # Visual Language Model for Visual Question Answering (VLM-VQA)
 
+![My project logo](evaluation/helm/images/sea.png)
+
 ## Overview
 
 This repository contains the implementation of a **Visual Language Model for Visual Question Answering (VLM-VQA)**.  
